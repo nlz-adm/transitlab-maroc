@@ -1,5 +1,5 @@
 {
-    "version":  "maroc-v3-20261020",
+    "version":  "maroc-v4-20261020",
     "generatedAt":  "2026-10-20T00:00:00.000Z",
     "strategy":  "native-esm-lazy-map",
     "layers":  {
