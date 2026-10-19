@@ -1,0 +1,45 @@
+{
+  "version": "maroc-v1-20261020",
+  "generatedAt": "2026-10-20T00:00:00.000Z",
+  "strategy": "native-esm-lazy-map",
+  "layers": {
+    "network": {
+      "url": "assets/network-data.json",
+      "bytes": 877165,
+      "loading": "after-shell"
+    },
+    "optional": {
+      "url": "assets/network-optional.json",
+      "bytes": 66,
+      "loading": "on-demand"
+    },
+    "communes": {
+      "url": "assets/communes-fast.json",
+      "bytes": 224629,
+      "loading": "on-demand"
+    },
+    "basemap": {
+      "url": "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+      "type": "osm-tiles",
+      "loading": "on-demand"
+    }
+  },
+  "scripts": {
+    "boot": {
+      "url": "assets/map-boot.js",
+      "bytes": 664
+    },
+    "app": {
+      "url": "assets/map-app.js",
+      "bytes": 131122
+    },
+    "worker": {
+      "url": "assets/line-index-worker.js",
+      "bytes": 1429
+    },
+    "leaflet": {
+      "url": "assets/leaflet.js",
+      "bytes": 147557
+    }
+  }
+}

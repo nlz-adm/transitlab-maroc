@@ -1,0 +1,18 @@
+{
+  "name": "TransitLab Maroc",
+  "short_name": "TransitLab Maroc",
+  "description": "Carte interactive du réseau de transports au Maroc : lignes, stations, correspondances et création de lignes personnalisées.",
+  "lang": "fr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b1220",
+  "theme_color": "#0b1220",
+  "icons": [
+    { "src": "assets/transitlab-favicon-32.png", "sizes": "32x32", "type": "image/png" },
+    { "src": "assets/transitlab-favicon-48.png", "sizes": "48x48", "type": "image/png" },
+    { "src": "assets/transitlab-favicon-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "assets/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "assets/transitlab-logo.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

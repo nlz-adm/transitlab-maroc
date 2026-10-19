@@ -1,0 +1,21 @@
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Outillage / dépendances
+node_modules/
+.npm/
+pnpm-lock.yaml
+
+# Secrets / environnement
+.env
+.env.*
+
+# Éditeurs
+.vscode/
+.idea/
+*.swp
+
+# Build
+dist/
