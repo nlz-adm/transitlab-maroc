@@ -1,64 +1,80 @@
 {
-    "version":  "maroc-v9-20261021",
-    "generatedAt":  "2026-10-21T00:00:00.000Z",
-    "strategy":  "native-esm-lazy-map",
-    "layers":  {
-                   "network":  {
-                                   "url":  "assets/network-data.json",
-                                   "bytes":  922743,
-                                   "loading":  "after-shell"
-                               },
-                   "optional":  {
-                                    "url":  "assets/network-optional.json",
-                                    "bytes":  91786,
-                                    "loading":  "on-demand"
-                                },
-                   "populationBoundaries":  {
-                                    "url":  "assets/communes-fast.json",
-                                    "features":  73,
-                                    "bytes":  240188,
-                                    "loading":  "on-demand for population density"
-                                },
-                   "communeBoundaryIndex":  {
-                                    "url":  "assets/commune-boundaries-index.json",
-                                    "bytes":  1490,
-                                    "loading":  "on-demand at zoom 7"
-                                },
-                   "communeBoundaries":  {
-                                    "url":  "assets/commune-boundaries/{region}.geojson",
-                                    "features":  1502,
-                                    "bytesTotal":  6832204,
-                                    "loading":  "visible regions only, at zoom 7 and above"
-                                },
-                   "arrondissements":  {
-                                    "url":  "assets/commune-boundaries/arrondissements.geojson",
-                                    "features":  41,
-                                    "cities":  6,
-                                    "bytes":  196056,
-                                    "loading":  "visible features only, at zoom 12 and above"
-                                },
-                   "basemap":  {
-                                   "url":  "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-                                   "type":  "osm-tiles",
-                                   "loading":  "on-demand"
-                               }
-               },
-    "scripts":  {
-                    "boot":  {
-                                 "url":  "assets/map-boot.js",
-                                 "bytes":  664
-                             },
-                    "app":  {
-                                "url":  "assets/map-app.js",
-                                 "bytes":  136273
-                            },
-                    "worker":  {
-                                   "url":  "assets/line-index-worker.js",
-                                   "bytes":  1429
-                               },
-                    "leaflet":  {
-                                    "url":  "assets/leaflet.js",
-                                    "bytes":  147557
-                                }
-                }
+  "version": "maroc-v10-20261021",
+  "generatedAt": "2026-10-21T12:00:00.000Z",
+  "strategy": "native-esm-lazy-map",
+  "layers": {
+    "network": {
+      "url": "assets/network-data.json",
+      "bytes": 924359,
+      "loading": "after-shell",
+      "pois": 286,
+      "airports": 21,
+      "aerodromes": 1
+    },
+    "optional": {
+      "url": "assets/network-optional.json",
+      "bytes": 296237,
+      "loading": "on-demand"
+    },
+    "populationBoundaries": {
+      "url": "assets/communes-fast.json",
+      "features": 73,
+      "reference": "RGPH 2024 · Haut-Commissariat au Plan",
+      "loading": "on demand: province overview below zoom 7"
+    },
+    "communeBoundaryIndex": {
+      "url": "assets/commune-boundaries-index.json",
+      "bytes": 1490,
+      "loading": "on-demand at zoom 7"
+    },
+    "communeBoundaries": {
+      "url": "assets/commune-boundaries/{region}.geojson",
+      "features": 1502,
+      "bytesTotal": 6832204,
+      "loading": "visible regions only, at zoom 7 and above"
+    },
+    "arrondissements": {
+      "url": "assets/commune-boundaries/arrondissements.geojson",
+      "features": 41,
+      "cities": 6,
+      "bytes": 196056,
+      "loading": "visible features only, at zoom 12 and above",
+      "populationMatched": 41
+    },
+    "basemap": {
+      "url": "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+      "type": "osm-tiles",
+      "loading": "on-demand"
+    },
+    "populationAdmin": {
+      "url": "assets/network-optional.json#populationAdmin + assets/commune-boundaries/{region}.geojson",
+      "features": 1543,
+      "matchedFeatures": 1543,
+      "levels": [
+        "commune",
+        "arrondissement in 6 cities"
+      ],
+      "loading": "on demand for visible regions; arrondissement detail at zoom 12",
+      "source": "https://www.hcp.ma/reg-casablanca/attachment/2664423/",
+      "limitation": "HCP publishes no nationwide urban neighborhood counts; rural douar counts are available separately."
+    }
+  },
+  "scripts": {
+    "boot": {
+      "url": "assets/map-boot.js",
+      "bytes": 665
+    },
+    "app": {
+      "url": "assets/map-app.js",
+      "bytes": 141353
+    },
+    "worker": {
+      "url": "assets/line-index-worker.js",
+      "bytes": 1429
+    },
+    "leaflet": {
+      "url": "assets/leaflet.js",
+      "bytes": 147557
+    }
+  }
 }
