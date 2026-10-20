@@ -1,6 +1,6 @@
 {
-    "version":  "maroc-v4-20261020",
-    "generatedAt":  "2026-10-20T00:00:00.000Z",
+    "version":  "maroc-v6-20261021",
+    "generatedAt":  "2026-10-21T00:00:00.000Z",
     "strategy":  "native-esm-lazy-map",
     "layers":  {
                    "network":  {
@@ -13,10 +13,29 @@
                                     "bytes":  91786,
                                     "loading":  "on-demand"
                                 },
-                   "communes":  {
+                   "populationBoundaries":  {
                                     "url":  "assets/communes-fast.json",
+                                    "features":  73,
                                     "bytes":  240188,
-                                    "loading":  "on-demand"
+                                    "loading":  "on-demand for population density"
+                                },
+                   "communeBoundaryIndex":  {
+                                    "url":  "assets/commune-boundaries-index.json",
+                                    "bytes":  1490,
+                                    "loading":  "on-demand at zoom 8"
+                                },
+                   "communeBoundaries":  {
+                                    "url":  "assets/commune-boundaries/{region}.geojson",
+                                    "features":  1502,
+                                    "bytesTotal":  6832204,
+                                    "loading":  "visible regions only, at zoom 8 and above"
+                                },
+                   "arrondissements":  {
+                                    "url":  "assets/commune-boundaries/arrondissements.geojson",
+                                    "features":  41,
+                                    "cities":  6,
+                                    "bytes":  196056,
+                                    "loading":  "visible features only, at zoom 12 and above"
                                 },
                    "basemap":  {
                                    "url":  "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
@@ -31,7 +50,7 @@
                              },
                     "app":  {
                                 "url":  "assets/map-app.js",
-                                "bytes":  131151
+                                 "bytes":  136273
                             },
                     "worker":  {
                                    "url":  "assets/line-index-worker.js",

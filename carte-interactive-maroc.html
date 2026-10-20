@@ -51,7 +51,7 @@
 <label class="toggle-row"><input id="employmentToggle" type="checkbox">Pôles d’emploi</label>
 <label class="toggle-row"><input id="populationToggle" type="checkbox">Densité de population</label>
 <label class="toggle-row"><input id="educationToggle" type="checkbox">Universités, écoles, lycées et collèges majeurs</label><div class="education-key" aria-label="Légende des établissements"><span class="education-key-item"><i class="education-key-dot universite">U</i>Université / école</span><span class="education-key-item"><i class="education-key-dot lycee">L</i>Lycée</span><span class="education-key-item"><i class="education-key-dot college">C</i>Collège</span></div>
-<div class="commune-tools"><button class="button small" id="communeListButton" type="button" aria-expanded="false">Afficher la liste des communes</button><label class="toggle-row"><input id="communesBoundaryToggle" type="checkbox">Limites des provinces</label></div>
+<div class="commune-tools"><button class="button small" id="communeListButton" type="button" aria-expanded="false">Afficher la liste des communes</button><label class="toggle-row"><input id="communesBoundaryToggle" type="checkbox" checked>Limites des communes et quartiers</label></div><p class="hint boundary-hint">Communes au zoom 8 ; arrondissements au zoom 12 dans les villes couvertes.</p>
 <div class="commune-list-panel" id="communeListPanel" hidden><input class="filter" id="communeSearch" type="search" placeholder="Rechercher une commune…" aria-label="Rechercher une commune"><div class="commune-results" id="communeResults" aria-live="polite"></div></div>
 </section>
 <hr class="divider">
@@ -74,7 +74,7 @@
 <div class="status" id="saveStatus" aria-live="polite"></div>
 </section>
 </div>
-<div class="data-note">Fond de carte : OpenStreetMap. Réseau ferré et communes : © les contributeurs OpenStreetMap, licence ODbL. Limites administratives : OCHA / HDX. Les pointillés signalent un projet. Carte utilisable hors connexion.</div>
+<div class="data-note">Fond de carte optionnel et limites communales : © les contributeurs OpenStreetMap (ODbL), compilation morocco-communes ; noms et codes : HCP (CC BY 4.0). Limites régionales : OCHA / HDX. Les pointillés signalent un projet. Les limites consultées sont mises en cache pour le hors ligne.</div>
 </aside>
 <button class="mobile-panel-button" id="panelButton">☰ Lignes et tracé</button>
 <div class="map-wrap"><div id="map" class="map" role="application" aria-label="Carte interactive du Maroc"></div><div class="map-badge"><strong>Maroc</strong> · réseau ferré et projets</div><div class="population-legend" id="populationLegend" hidden><div class="population-legend-title">Densité de population</div><div class="population-legend-subtitle">Habitants par km² · population municipale 2022</div><div class="population-scale" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div><div class="population-scale-labels"><span>0</span><span>20k+</span></div><div class="population-legend-note">Survole une commune pour afficher son détail.</div></div><div class="education-selection" id="educationSelection" hidden aria-live="polite"><button class="education-selection-close" id="educationSelectionClose" type="button" aria-label="Fermer la fiche">×</button><div id="educationSelectionBody"></div></div></div></div>
@@ -83,7 +83,7 @@
 </div>
 <div class="trace-preview-modal" id="tracePreviewModal" hidden role="dialog" aria-modal="true" aria-labelledby="tracePreviewTitle"><div class="trace-preview-dialog"><header class="trace-preview-head"><div><h2 id="tracePreviewTitle">Aperçu du tracé</h2><p id="tracePreviewSubtitle">Ligne personnalisée</p></div><button class="trace-preview-close" id="tracePreviewClose" type="button" aria-label="Fermer l’aperçu">×</button></header><div class="trace-preview-content" id="tracePreviewContent" role="img" aria-label="Aperçu du tracé cartographique"></div><footer class="trace-preview-foot"><span>Vérifie le placement des stations, noms et correspondances avant l’export.</span><div class="trace-preview-actions"><button class="button small" id="tracePreviewCancel" type="button">Fermer</button><button class="button small primary" id="tracePreviewDownload" type="button">Télécharger PNG</button></div></footer></div></div>
 <script src="assets/leaflet.js" defer></script>
-<script type="module" src="assets/map-boot.js?v=maroc-v5-20261021" defer></script>
+<script type="module" src="assets/map-boot.js?v=maroc-v6-20261021" defer></script>
 </body>
 </html>
 
