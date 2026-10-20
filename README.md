@@ -7,7 +7,7 @@ Carte interactive du réseau de transports au Maroc pour explorer le réseau fer
 - **Exploration** : réseau ferré (Al Boraq/LGV, ONCF, tramways), gares, arrêts, 21 aéroports ONDA et l’aérodrome de Tit Mellil.
 - **Choix de la commune** : recherche et zoom sur les ~1 500 communes du Maroc, classées par population.
 - **Limites adaptatives** : communes dès le zoom 7 et arrondissements dès le zoom 12 dans les six grandes villes couvertes.
-- **Densité de population** : RGPH 2024, par province à l’échelle nationale, par commune au zoom, puis par arrondissement dans les six grandes villes.
+- **Densité de population** : chiffres du RGPH 2024 par province, commune et arrondissement, complétés au zoom par des mailles estimées multi-sources d’environ 400 m.
 - **Création de lignes** : tracez une ligne hypothétique, raccordez-la aux gares, personnalisez nom et couleur (logo généré automatiquement).
 - **Exports** : GeoJSON, aperçu du tracé (PNG), plan schématique (SVG, PDF, impression).
 - **Hors ligne** : service worker + cache IndexedDB, y compris les limites déjà consultées (le fond OpenStreetMap s’affiche par défaut et nécessite une connexion internet).
@@ -24,10 +24,12 @@ Site 100 % statique (aucun backend, tuiles OpenStreetMap chargées en ligne).
 | `assets/map-app.js` | Moteur de la carte (Leaflet) |
 | `assets/map-boot.js` | Point d'entrée différé (chargement paresseux) |
 | `assets/line-index-worker.js` | Web worker (index des tronçons partagés) |
+| `tools/prepare-population-neighborhoods.py` | Reproduit les mailles compressées à partir du GeoPackage Kontur/HDX |
 | `sw.js` | Service worker (cache statique + données) |
 | `assets/data-catalog.json` | Manifeste des couches de données |
 | `assets/commune-boundaries-index.json` | Emprises des 12 fichiers régionaux de communes |
 | `assets/commune-boundaries/*.geojson` | Contours communaux et arrondissements, chargés au zoom et selon la zone visible |
+| `assets/population-neighborhoods-index.json` et `assets/population-neighborhoods/*.geojson.gz` | Mailles fines de population, chargées seulement dans la zone visible au zoom 11+ |
 | `assets/*.json` | Réseau, communes recherchables et données complémentaires |
 | `manifest.json` | Manifeste d'application web (PWA) |
 
@@ -54,12 +56,13 @@ Le **code** est distribué sous licence MIT (voir [`LICENSE`](LICENSE)). Les **d
 |---|---|---|
 | OpenStreetMap | Réseau ferré (voies, gares, arrêts), aéroports et géométries | ODbL |
 | [HCP · RGPH 2024](https://www.hcp.ma/reg-casablanca/نتائج-الإحصاء-العام-للسكان-والسكنى-2024_a126.html) | Population officielle par commune et arrondissement; la densité est calculée avec la surface des polygones | CC BY 4.0 |
+| [Kontur Population · HDX](https://data.humdata.org/dataset/38e5a215-ebdf-4ef8-b52a-96bd03b4de9e) | Mailles H3 d’environ 400 m, édition 2023; fusion de GHSL, Meta HRSL, empreintes Microsoft, couverture Copernicus, Land Information New Zealand et OpenStreetMap | CC BY 4.0 |
 | OCHA / HDX (COD-AB) | Limites administratives (régions, provinces) | Données ouvertes OCHA |
 | [morocco-communes](https://github.com/zkousama/morocco-communes), OpenStreetMap et HCP | 1 502 contours communaux disponibles et 41 arrondissements dans 6 villes | ODbL pour les contours ; CC BY 4.0 pour les données HCP |
 | OpenStreetMap | Fond de carte tuilé (optionnel, en ligne) | ODbL |
 
-La carte affine la densité au zoom : provinces à l’échelle nationale, communes à partir du zoom 7, puis arrondissements au zoom 12 dans Casablanca, Rabat, Salé, Fès, Tanger et Marrakech. Le HCP publie aussi des effectifs par douar en milieu rural, mais pas de population par quartier urbain à l’échelle nationale ; ces douars ne sont pas des quartiers et leurs chiffres ne sont donc pas présentés comme tels.
+La carte affine la densité au zoom : provinces à l’échelle nationale, communes à partir du zoom 7, puis arrondissements au zoom 12 dans Casablanca, Rabat, Salé, Fès, Tanger et Marrakech. À partir du zoom 11, une grille locale d’hexagones d’environ 400 m utilise les estimations multi-sources de Kontur/HDX. Ces hexagones ne sont pas des limites officielles de quartiers et leurs valeurs sont des estimations, pas un recensement. Les chiffres officiels HCP du RGPH 2024 restent accessibles en cliquant les communes et arrondissements. Le HCP publie aussi des effectifs par douar en milieu rural, mais les douars ne sont pas des quartiers urbains.
 
-Attribution obligatoire : « © les contributeurs OpenStreetMap » (ODbL), « HCP » (CC BY 4.0) pour les codes et noms, « OCHA / HDX » pour les limites régionales existantes et le jeu [morocco-communes](https://github.com/zkousama/morocco-communes) pour ses limites communales et d’arrondissements.
+Attribution obligatoire : « © les contributeurs OpenStreetMap » (ODbL), « HCP » (CC BY 4.0) pour les chiffres du RGPH 2024, « Kontur Population / HDX » (CC BY 4.0) pour les estimations en mailles, « OCHA / HDX » pour les limites régionales et le jeu [morocco-communes](https://github.com/zkousama/morocco-communes) pour ses limites communales et d’arrondissements.
 
 Leaflet est vendu localement sous licence BSD-2-Clause (voir `assets/leaflet.js`).
