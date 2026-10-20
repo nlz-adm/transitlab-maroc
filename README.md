@@ -6,15 +6,15 @@ Carte interactive du réseau de transports au Maroc pour explorer le réseau fer
 
 - **Exploration** : réseau ferré (Al Boraq/LGV, ONCF, tramways), gares et arrêts.
 - **Choix de la commune** : recherche et zoom sur les ~1 500 communes du Maroc, classées par population.
-- **Limites adaptatives** : régions à l’échelle du pays, communes à partir du zoom 8 et arrondissements à partir du zoom 12 dans les villes couvertes.
+- **Limites adaptatives** : régions à l’échelle du pays, communes dès le zoom 7 et arrondissements dès le zoom 12 dans les villes couvertes.
 - **Création de lignes** : tracez une ligne hypothétique, raccordez-la aux gares, personnalisez nom et couleur (logo généré automatiquement).
 - **Exports** : GeoJSON, aperçu du tracé (PNG), plan schématique (SVG, PDF, impression).
-- **Hors ligne** : service worker + cache IndexedDB, y compris les limites déjà consultées (le fond de carte tuilé reste optionnel et en ligne).
+- **Hors ligne** : service worker + cache IndexedDB, y compris les limites déjà consultées (le fond OpenStreetMap s’affiche par défaut et nécessite une connexion internet).
 - **PWA** : installable (manifest web).
 
 ## Architecture
 
-Site 100 % statique (aucun backend, aucune dépendance d'exécution externe hors fond de carte optionnel).
+Site 100 % statique (aucun backend, tuiles OpenStreetMap chargées en ligne).
 
 | Fichier | Rôle |
 |---|---|

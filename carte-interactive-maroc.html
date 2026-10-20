@@ -51,7 +51,7 @@
 <label class="toggle-row"><input id="employmentToggle" type="checkbox">Pôles d’emploi</label>
 <label class="toggle-row"><input id="populationToggle" type="checkbox">Densité de population</label>
 <label class="toggle-row"><input id="educationToggle" type="checkbox">Universités, écoles, lycées et collèges majeurs</label><div class="education-key" aria-label="Légende des établissements"><span class="education-key-item"><i class="education-key-dot universite">U</i>Université / école</span><span class="education-key-item"><i class="education-key-dot lycee">L</i>Lycée</span><span class="education-key-item"><i class="education-key-dot college">C</i>Collège</span></div>
-<div class="commune-tools"><button class="button small" id="communeListButton" type="button" aria-expanded="false">Afficher la liste des communes</button><label class="toggle-row"><input id="communesBoundaryToggle" type="checkbox" checked>Limites des communes et quartiers</label></div><p class="hint boundary-hint">Communes au zoom 8 ; arrondissements au zoom 12 dans les villes couvertes.</p>
+<div class="commune-tools"><button class="button small" id="communeListButton" type="button" aria-expanded="false">Afficher la liste des communes</button><label class="toggle-row"><input id="communesBoundaryToggle" type="checkbox" checked>Limites des communes et détails urbains</label></div><p class="hint boundary-hint">Communes dès le zoom 7 ; arrondissements au zoom 12 selon les villes couvertes.</p>
 <div class="commune-list-panel" id="communeListPanel" hidden><input class="filter" id="communeSearch" type="search" placeholder="Rechercher une commune…" aria-label="Rechercher une commune"><div class="commune-results" id="communeResults" aria-live="polite"></div></div>
 </section>
 <hr class="divider">
@@ -83,7 +83,7 @@
 </div>
 <div class="trace-preview-modal" id="tracePreviewModal" hidden role="dialog" aria-modal="true" aria-labelledby="tracePreviewTitle"><div class="trace-preview-dialog"><header class="trace-preview-head"><div><h2 id="tracePreviewTitle">Aperçu du tracé</h2><p id="tracePreviewSubtitle">Ligne personnalisée</p></div><button class="trace-preview-close" id="tracePreviewClose" type="button" aria-label="Fermer l’aperçu">×</button></header><div class="trace-preview-content" id="tracePreviewContent" role="img" aria-label="Aperçu du tracé cartographique"></div><footer class="trace-preview-foot"><span>Vérifie le placement des stations, noms et correspondances avant l’export.</span><div class="trace-preview-actions"><button class="button small" id="tracePreviewCancel" type="button">Fermer</button><button class="button small primary" id="tracePreviewDownload" type="button">Télécharger PNG</button></div></footer></div></div>
 <script src="assets/leaflet.js" defer></script>
-<script type="module" src="assets/map-boot.js?v=maroc-v6-20261021" defer></script>
+<script type="module" src="assets/map-boot.js?v=maroc-v7-20261021" defer></script>
 </body>
 </html>
 
