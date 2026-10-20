@@ -1,6 +1,6 @@
 (() => {
 'use strict';
-if('serviceWorker' in navigator){navigator.serviceWorker.register(new URL('sw.js?v=maroc-v4-20261020',document.baseURI),{scope:new URL('./',document.baseURI).pathname}).catch(()=>{});}
+if('serviceWorker' in navigator){navigator.serviceWorker.register(new URL('sw.js?v=maroc-v5-20261021',document.baseURI),{scope:new URL('./',document.baseURI).pathname}).catch(()=>{});}
 const DATA_CACHE_DB='transitlab-data-vnext',DATA_CACHE_STORE='json';
 function openDataCache(){if(!('indexedDB' in window))return Promise.reject(new Error('IndexedDB indisponible'));return new Promise((resolve,reject)=>{const request=indexedDB.open(DATA_CACHE_DB,1);request.onupgradeneeded=()=>{if(!request.result.objectStoreNames.contains(DATA_CACHE_STORE))request.result.createObjectStore(DATA_CACHE_STORE)};request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error||new Error('Cache indisponible'))})}
 async function readCachedJson(key){try{const db=await openDataCache();return await new Promise((resolve,reject)=>{const request=db.transaction(DATA_CACHE_STORE,'readonly').objectStore(DATA_CACHE_STORE).get(key);request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error)})}catch{return undefined}}
