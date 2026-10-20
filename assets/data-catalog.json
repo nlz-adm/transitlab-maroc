@@ -1,19 +1,19 @@
 {
-  "version": "maroc-v12-20261021",
-  "generatedAt": "2026-10-21T12:00:00Z",
+  "version": "maroc-v13-20261021",
+  "generatedAt": "2026-10-20T23:46:36Z",
   "strategy": "native-esm-lazy-map",
   "layers": {
     "network": {
       "url": "assets/network-data.json",
-      "bytes": 924359,
+      "bytes": 923169,
       "loading": "after-shell",
-      "pois": 286,
+      "pois": 236,
       "airports": 21,
       "aerodromes": 1
     },
     "optional": {
       "url": "assets/network-optional.json",
-      "bytes": 296237,
+      "bytes": 215912,
       "loading": "on-demand"
     },
     "populationBoundaries": {
@@ -70,6 +70,53 @@
       "method": "fusion GHSL, Meta HRSL, empreintes Microsoft, couverture Copernicus, LINZ et OpenStreetMap",
       "license": "CC BY 4.0",
       "limitation": "estimations modélisées par maille; les agrégats administratifs officiels restent ceux du HCP RGPH 2024"
+    },
+    "shoppingCenters": {
+      "features": 50,
+      "source": "OpenStreetMap contributors",
+      "sourceDate": "2026-10-20T23:26:53Z",
+      "sourceUrl": "https://www.openstreetmap.org/",
+      "curatedAdditions": [
+        "Almazar · site officiel",
+        "Le Mall du Carrousel · site officiel",
+        "Sela Park Agadir · site officiel"
+      ],
+      "filter": "shop=mall or building=mall; named centre/mall/gallery/place or recognized-name exception; independent shops, supermarkets and traditional markets excluded",
+      "loading": "chargés après la carte, repères activables dans la liste des lieux",
+      "license": "ODbL 1.0",
+      "nameExceptions": [
+        "Carré d’Eden",
+        "Socco Alto",
+        "Borj Fez",
+        "Sela Park"
+      ],
+      "curatedSources": [
+        "https://almazar.ma/",
+        "https://lemallducarrousel.ma/",
+        "https://sela.ma/agadir/"
+      ]
+    },
+    "educationEstablishments": {
+      "url": "assets/education-establishments-index.json",
+      "searchUrl": "assets/education-establishments-search.json.gz",
+      "features": 4601,
+      "countsByType": {
+        "lycee": 553,
+        "ecole": 2943,
+        "college": 862,
+        "universite": 224,
+        "superieur": 19
+      },
+      "chunks": 124,
+      "bytesCompressed": 178842,
+      "searchIndexBytes": 124653,
+      "resolution": "établissements OSM géolocalisés en points ou centres d’emprises",
+      "loading": "mailles visibles seulement; universités dès zoom 10.5, collèges/lycées dès 12, écoles dès 13",
+      "source": "https://www.openstreetmap.org/",
+      "sourceDate": "2026-10-20T23:26:53Z",
+      "license": "ODbL 1.0",
+      "classification": "amenity=school/college/university, type collège/lycée inféré des tags et des noms locaux; supérieur séparé",
+      "limitation": "couverture dépend de la cartographie OpenStreetMap; catégories déduites et indicatives, pas un inventaire officiel exhaustif"
     }
   },
   "scripts": {
@@ -79,7 +126,7 @@
     },
     "app": {
       "url": "assets/map-app.js",
-      "bytes": 148060
+      "bytes": 152448
     },
     "worker": {
       "url": "assets/line-index-worker.js",

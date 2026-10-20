@@ -8,6 +8,7 @@ Carte interactive du réseau de transports au Maroc pour explorer le réseau fer
 - **Choix de la commune** : recherche et zoom sur les ~1 500 communes du Maroc, classées par population.
 - **Limites adaptatives** : communes dès le zoom 7 et arrondissements dès le zoom 12 dans les six grandes villes couvertes.
 - **Densité de population** : chiffres du RGPH 2024 par province, commune et arrondissement, complétés au zoom par des mailles estimées multi-sources d’environ 400 m.
+- **Équipements** : 50 centres commerciaux, galeries et parcs commerciaux nommés (hors magasins isolés, enseignes seules et marchés) et 4 601 indicateurs d’enseignement OpenStreetMap, chargés au zoom utile et classés par niveau quand les tags ou le nom le permettent.
 - **Création de lignes** : tracez une ligne hypothétique, raccordez-la aux gares, personnalisez nom et couleur (logo généré automatiquement).
 - **Exports** : GeoJSON, aperçu du tracé (PNG), plan schématique (SVG, PDF, impression).
 - **Hors ligne** : service worker + cache IndexedDB, y compris les limites déjà consultées (le fond OpenStreetMap s’affiche par défaut et nécessite une connexion internet).
@@ -25,11 +26,13 @@ Site 100 % statique (aucun backend, tuiles OpenStreetMap chargées en ligne).
 | `assets/map-boot.js` | Point d'entrée différé (chargement paresseux) |
 | `assets/line-index-worker.js` | Web worker (index des tronçons partagés) |
 | `tools/prepare-population-neighborhoods.py` | Reproduit les mailles compressées à partir du GeoPackage Kontur/HDX |
+| `tools/prepare-places-from-osm.py` | Rafraîchit les centres commerciaux filtrés et les établissements d’enseignement OSM |
 | `sw.js` | Service worker (cache statique + données) |
 | `assets/data-catalog.json` | Manifeste des couches de données |
 | `assets/commune-boundaries-index.json` | Emprises des 12 fichiers régionaux de communes |
 | `assets/commune-boundaries/*.geojson` | Contours communaux et arrondissements, chargés au zoom et selon la zone visible |
 | `assets/population-neighborhoods-index.json` et `assets/population-neighborhoods/*.geojson.gz` | Mailles fines de population, chargées seulement dans la zone visible au zoom 11+ |
+| `assets/education-establishments-index.json`, `assets/education-establishments/*.geojson.gz` | Écoles et universités, fichiers de zone chargés à la demande au zoom rapproché |
 | `assets/*.json` | Réseau, communes recherchables et données complémentaires |
 | `manifest.json` | Manifeste d'application web (PWA) |
 
@@ -54,7 +57,8 @@ Le **code** est distribué sous licence MIT (voir [`LICENSE`](LICENSE)). Les **d
 
 | Source | Contenu | Licence |
 |---|---|---|
-| OpenStreetMap | Réseau ferré (voies, gares, arrêts), aéroports et géométries | ODbL |
+| OpenStreetMap | Réseau ferré, lieux nommés, centres commerciaux filtrés et établissements d’enseignement géolocalisés | ODbL |
+| [Ministère de l’Éducation nationale · Portail Open Data](https://data.gov.ma/data/fr/dataset/api_dataset/listes-des-etablissements-scolaires-publics) | Répertoire officiel des établissements publics, par cycle (consultation de référence; positions de la carte tirées d’OpenStreetMap) | ODbL |
 | [HCP · RGPH 2024](https://www.hcp.ma/reg-casablanca/نتائج-الإحصاء-العام-للسكان-والسكنى-2024_a126.html) | Population officielle par commune et arrondissement; la densité est calculée avec la surface des polygones | CC BY 4.0 |
 | [Kontur Population · HDX](https://data.humdata.org/dataset/38e5a215-ebdf-4ef8-b52a-96bd03b4de9e) | Mailles H3 d’environ 400 m, édition 2023; fusion de GHSL, Meta HRSL, empreintes Microsoft, couverture Copernicus, Land Information New Zealand et OpenStreetMap | CC BY 4.0 |
 | OCHA / HDX (COD-AB) | Limites administratives (régions, provinces) | Données ouvertes OCHA |
@@ -62,6 +66,8 @@ Le **code** est distribué sous licence MIT (voir [`LICENSE`](LICENSE)). Les **d
 | OpenStreetMap | Fond de carte tuilé (optionnel, en ligne) | ODbL |
 
 La carte affine la densité au zoom : provinces à l’échelle nationale, communes à partir du zoom 7, puis arrondissements au zoom 12 dans Casablanca, Rabat, Salé, Fès, Tanger et Marrakech. À partir du zoom 11, une grille locale d’hexagones d’environ 400 m utilise les estimations multi-sources de Kontur/HDX. Ces hexagones ne sont pas des limites officielles de quartiers et leurs valeurs sont des estimations, pas un recensement. Les chiffres officiels HCP du RGPH 2024 restent accessibles en cliquant les communes et arrondissements. Le HCP publie aussi des effectifs par douar en milieu rural, mais les douars ne sont pas des quartiers urbains.
+
+Les repères commerciaux sont limités aux lieux nommés cartographiés comme centre/mall, complétés par quelques centres vérifiés sur les sites de leurs gestionnaires. Les boutiques isolées, enseignes de grande distribution, marchés et souks sont filtrés. La liste contient actuellement 50 lieux et ne constitue pas un recensement exhaustif. Les établissements scolaires proviennent des objets OpenStreetMap; leur classification collège/lycée s’appuie sur les tags disponibles et les noms (français ou arabes). Les positions et la couverture peuvent varier et ne constituent pas un inventaire exhaustif du ministère. Le répertoire public MENPS est consultable séparément.
 
 Attribution obligatoire : « © les contributeurs OpenStreetMap » (ODbL), « HCP » (CC BY 4.0) pour les chiffres du RGPH 2024, « Kontur Population / HDX » (CC BY 4.0) pour les estimations en mailles, « OCHA / HDX » pour les limites régionales et le jeu [morocco-communes](https://github.com/zkousama/morocco-communes) pour ses limites communales et d’arrondissements.
 
