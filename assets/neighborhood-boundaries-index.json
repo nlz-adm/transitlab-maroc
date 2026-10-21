@@ -1,0 +1,150 @@
+{
+  "version": "morocco-neighborhood-boundaries-2026-10-21",
+  "generatedAt": "2026-10-21",
+  "sourceRelease": "2026-09-23.1",
+  "regions": [
+    {
+      "code": "01",
+      "url": "assets/neighborhood-boundaries/01.geojson.gz",
+      "bbox": [
+        -6.186165,
+        35.147545,
+        -3.912983,
+        35.875702
+      ],
+      "count": 55,
+      "mapped": 6,
+      "estimated": 49,
+      "bytesCompressed": 20623
+    },
+    {
+      "code": "02",
+      "url": "assets/neighborhood-boundaries/02.geojson.gz",
+      "bbox": [
+        -2.962469,
+        32.085203,
+        -1.213196,
+        35.223935
+      ],
+      "count": 207,
+      "mapped": 18,
+      "estimated": 189,
+      "bytesCompressed": 31277
+    },
+    {
+      "code": "03",
+      "url": "assets/neighborhood-boundaries/03.geojson.gz",
+      "bbox": [
+        -5.603333,
+        33.65992,
+        -4.621602,
+        34.575526
+      ],
+      "count": 44,
+      "mapped": 9,
+      "estimated": 35,
+      "bytesCompressed": 10927
+    },
+    {
+      "code": "04",
+      "url": "assets/neighborhood-boundaries/04.geojson.gz",
+      "bbox": [
+        -7.005669,
+        33.890289,
+        -5.686278,
+        34.310901
+      ],
+      "count": 53,
+      "mapped": 17,
+      "estimated": 36,
+      "bytesCompressed": 21689
+    },
+    {
+      "code": "05",
+      "url": "assets/neighborhood-boundaries/05.geojson.gz",
+      "bbox": [
+        -7.003165,
+        31.733072,
+        -6.23745,
+        32.902692
+      ],
+      "count": 17,
+      "mapped": 11,
+      "estimated": 6,
+      "bytesCompressed": 3730
+    },
+    {
+      "code": "06",
+      "url": "assets/neighborhood-boundaries/06.geojson.gz",
+      "bbox": [
+        -8.542378,
+        32.960871,
+        -7.338219,
+        33.733713
+      ],
+      "count": 111,
+      "mapped": 46,
+      "estimated": 65,
+      "bytesCompressed": 26053
+    },
+    {
+      "code": "07",
+      "url": "assets/neighborhood-boundaries/07.geojson.gz",
+      "bbox": [
+        -9.772721,
+        31.510888,
+        -7.884739,
+        32.339569
+      ],
+      "count": 70,
+      "mapped": 15,
+      "estimated": 55,
+      "bytesCompressed": 15150
+    },
+    {
+      "code": "08",
+      "url": "assets/neighborhood-boundaries/08.geojson.gz",
+      "bbox": [
+        -6.910711,
+        30.924739,
+        -5.52281,
+        31.532321
+      ],
+      "count": 4,
+      "mapped": 4,
+      "estimated": 0,
+      "bytesCompressed": 1029
+    },
+    {
+      "code": "09",
+      "url": "assets/neighborhood-boundaries/09.geojson.gz",
+      "bbox": [
+        -9.676507,
+        30.219261,
+        -7.914201,
+        30.532142
+      ],
+      "count": 107,
+      "mapped": 34,
+      "estimated": 73,
+      "bytesCompressed": 17970
+    }
+  ],
+  "features": 668,
+  "mappedFeatures": 160,
+  "estimatedFeatures": 508,
+  "communesWithFeatures": 51,
+  "postalCrossChecks": 146,
+  "sources": {
+    "mappedGeometry": "Overture Maps divisions / OpenStreetMap, division_area neighborhood and macrohood polygons",
+    "estimatedGeometry": "Voronoi cells around OpenStreetMap / Overture named neighborhood and macrohood points, clipped to mapped urban communes and the Kontur population mask",
+    "communeContext": "morocco-communes 1.10.0 geometry with HCP RGPH 2024 commune codes and urban/rural type",
+    "populationMask": "Kontur Population · HDX · H3 resolution 8 · 2023, integrating GHSL, Meta HRSL, Microsoft building footprints, Copernicus, LINZ and OpenStreetMap",
+    "postalNames": "Poste Maroc, codes postaux des quartiers, 2018 · name and postcode match only; source contains no neighborhood boundaries"
+  },
+  "licenses": [
+    "ODbL 1.0",
+    "CC BY 4.0"
+  ],
+  "limitations": "Mapped neighborhood outlines are incomplete. Dashed estimated cells are indicative areas, not official neighborhood limits. No boundary is generated for postal names without a mapped coordinate. Postal names are from 2018."
+}

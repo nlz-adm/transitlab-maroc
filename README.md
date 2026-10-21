@@ -6,7 +6,7 @@ Carte interactive du réseau de transports au Maroc pour explorer le réseau fer
 
 - **Exploration** : réseau ferré (Al Boraq/LGV, ONCF, tramways), gares, arrêts, 21 aéroports ONDA et l’aérodrome de Tit Mellil.
 - **Choix de la commune** : recherche et zoom sur les ~1 500 communes du Maroc, classées par population.
-- **Limites adaptatives** : communes dès le zoom 7 et arrondissements dès le zoom 12 dans les six grandes villes couvertes.
+- **Limites adaptatives** : communes dès le zoom 7, arrondissements dès le zoom 12 et quartiers urbains dès le zoom 13 dans les zones couvertes. Les contours continus sont cartographiés ; les pointillés sont des estimations multi-sources.
 - **Densité de population** : chiffres du RGPH 2024 par province, commune et arrondissement, complétés au zoom par des mailles estimées multi-sources d’environ 400 m.
 - **Équipements** : 50 centres commerciaux, galeries et parcs commerciaux nommés (hors magasins isolés, enseignes seules et marchés) et 4 601 indicateurs d’enseignement OpenStreetMap, chargés au zoom utile et classés par niveau quand les tags ou le nom le permettent.
 - **Création de lignes** : tracez une ligne hypothétique, raccordez-la aux gares, personnalisez nom et couleur (logo généré automatiquement).
@@ -26,11 +26,13 @@ Site 100 % statique (aucun backend, tuiles OpenStreetMap chargées en ligne).
 | `assets/map-boot.js` | Point d'entrée différé (chargement paresseux) |
 | `assets/line-index-worker.js` | Web worker (index des tronçons partagés) |
 | `tools/prepare-population-neighborhoods.py` | Reproduit les mailles compressées à partir du GeoPackage Kontur/HDX |
+| `tools/prepare-neighborhood-boundaries.py` | Croise les quartiers Overture/OSM, les communes urbaines, la grille Kontur/HDX et le catalogue postal Poste Maroc (Shapely 2.1+) |
 | `tools/prepare-places-from-osm.py` | Rafraîchit les centres commerciaux filtrés et les établissements d’enseignement OSM |
 | `sw.js` | Service worker (cache statique + données) |
 | `assets/data-catalog.json` | Manifeste des couches de données |
 | `assets/commune-boundaries-index.json` | Emprises des 12 fichiers régionaux de communes |
-| `assets/commune-boundaries/*.geojson` | Contours communaux et arrondissements, chargés au zoom et selon la zone visible |
+| `assets/commune-boundaries/*.geojson` | Contours communaux et arrondissements, chargés selon le zoom et la zone visible |
+| `assets/neighborhood-boundaries-index.json` et `assets/neighborhood-boundaries/*.geojson.gz` | Contours cartographiés et limites estimées des quartiers, chargés à partir du zoom 13 dans la zone visible |
 | `assets/population-neighborhoods-index.json` et `assets/population-neighborhoods/*.geojson.gz` | Mailles fines de population, chargées seulement dans la zone visible au zoom 11+ |
 | `assets/education-establishments-index.json`, `assets/education-establishments/*.geojson.gz` | Écoles et universités, fichiers de zone chargés à la demande au zoom rapproché |
 | `assets/*.json` | Réseau, communes recherchables et données complémentaires |
@@ -57,7 +59,8 @@ Le **code** est distribué sous licence MIT (voir [`LICENSE`](LICENSE)). Les **d
 
 | Source | Contenu | Licence |
 |---|---|---|
-| OpenStreetMap | Réseau ferré, lieux nommés, centres commerciaux filtrés et établissements d’enseignement géolocalisés | ODbL |
+| [OpenStreetMap](https://www.openstreetmap.org/) / [Overture Maps divisions](https://docs.overturemaps.org/guides/divisions/) | Réseau ferré, lieux, centres commerciaux et établissements scolaires; contours de quartiers OSM et points utilisés pour les limites estimées | ODbL |
+| [Poste Maroc · codes postaux des quartiers](https://www.data.gov.ma/data/fr/dataset/codes-postaux-des-quartiers) | Noms et codes postaux 2018, utilisés seulement lorsqu’un quartier est rapproché exactement | ODbL |
 | [Ministère de l’Éducation nationale · Portail Open Data](https://data.gov.ma/data/fr/dataset/api_dataset/listes-des-etablissements-scolaires-publics) | Répertoire officiel des établissements publics, par cycle (consultation de référence; positions de la carte tirées d’OpenStreetMap) | ODbL |
 | [HCP · RGPH 2024](https://www.hcp.ma/reg-casablanca/نتائج-الإحصاء-العام-للسكان-والسكنى-2024_a126.html) | Population officielle par commune et arrondissement; la densité est calculée avec la surface des polygones | CC BY 4.0 |
 | [Kontur Population · HDX](https://data.humdata.org/dataset/38e5a215-ebdf-4ef8-b52a-96bd03b4de9e) | Mailles H3 d’environ 400 m, édition 2023; fusion de GHSL, Meta HRSL, empreintes Microsoft, couverture Copernicus, Land Information New Zealand et OpenStreetMap | CC BY 4.0 |
@@ -65,10 +68,10 @@ Le **code** est distribué sous licence MIT (voir [`LICENSE`](LICENSE)). Les **d
 | [morocco-communes](https://github.com/zkousama/morocco-communes), OpenStreetMap et HCP | 1 502 contours communaux disponibles et 41 arrondissements dans 6 villes | ODbL pour les contours ; CC BY 4.0 pour les données HCP |
 | OpenStreetMap | Fond de carte tuilé (optionnel, en ligne) | ODbL |
 
-La carte affine la densité au zoom : provinces à l’échelle nationale, communes à partir du zoom 7, puis arrondissements au zoom 12 dans Casablanca, Rabat, Salé, Fès, Tanger et Marrakech. À partir du zoom 11, une grille locale d’hexagones d’environ 400 m utilise les estimations multi-sources de Kontur/HDX. Ces hexagones ne sont pas des limites officielles de quartiers et leurs valeurs sont des estimations, pas un recensement. Les chiffres officiels HCP du RGPH 2024 restent accessibles en cliquant les communes et arrondissements. Le HCP publie aussi des effectifs par douar en milieu rural, mais les douars ne sont pas des quartiers urbains.
+La couche de limites est désactivée au démarrage et s’active depuis « Limites communales et quartiers ». À partir du zoom 13, elle affiche 160 contours de quartiers cartographiés et 508 secteurs indicatifs dans 51 communes urbaines couvertes. Les contours continus viennent des polygones de quartiers d’OpenStreetMap diffusés par Overture Maps, livraison `2026-09-23.1`, et sont découpés à la commune urbaine. Les pointillés sont générés à partir de points de quartiers nommés ; ils sont limités aux communes urbaines et à la grille résidentielle de Kontur/HDX. Les pointillés ne représentent pas des limites officielles. Le catalogue Poste Maroc sert à rapprocher certains noms et codes postaux, sans fournir de géométrie. La couverture reste partielle et varie selon les villes. La densité H3 est une couche distincte : ses hexagones d’environ 400 m donnent des estimations multi-sources, pas un recensement par quartier.
 
 Les repères commerciaux sont limités aux lieux nommés cartographiés comme centre/mall, complétés par quelques centres vérifiés sur les sites de leurs gestionnaires. Les boutiques isolées, enseignes de grande distribution, marchés et souks sont filtrés. La liste contient actuellement 50 lieux et ne constitue pas un recensement exhaustif. Les établissements scolaires proviennent des objets OpenStreetMap; leur classification collège/lycée s’appuie sur les tags disponibles et les noms (français ou arabes). Les positions et la couverture peuvent varier et ne constituent pas un inventaire exhaustif du ministère. Le répertoire public MENPS est consultable séparément.
 
-Attribution obligatoire : « © les contributeurs OpenStreetMap » (ODbL), « HCP » (CC BY 4.0) pour les chiffres du RGPH 2024, « Kontur Population / HDX » (CC BY 4.0) pour les estimations en mailles, « OCHA / HDX » pour les limites régionales et le jeu [morocco-communes](https://github.com/zkousama/morocco-communes) pour ses limites communales et d’arrondissements.
+Attribution obligatoire : « © les contributeurs OpenStreetMap, Overture Maps Foundation » (ODbL), « Poste Maroc » (ODbL) pour les noms et codes postaux, « HCP » (CC BY 4.0) pour les chiffres du RGPH 2024, « Kontur Population / HDX » (CC BY 4.0) pour la grille résidentielle multi-sources, « OCHA / HDX » pour les limites régionales et le jeu [morocco-communes](https://github.com/zkousama/morocco-communes) pour les contours communaux et d’arrondissements.
 
 Leaflet est vendu localement sous licence BSD-2-Clause (voir `assets/leaflet.js`).
