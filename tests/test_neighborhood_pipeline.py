@@ -127,6 +127,8 @@ class PublishedDataIntegrityTests(unittest.TestCase):
         self.assertIn("boundaryFeatureBbox(feature)", app)
         self.assertIn("neighborhoodHaloPane", app)
         self.assertIn("export function populationNeighborhoodColor", helper)
+        self.assertIn(r"\/assets\/", worker)
+        self.assertIn(r"\.json$", worker)
         self.assertIn("request.mode === 'navigate'", worker)
         self.assertIn("fetch(request, { cache: 'no-cache' })", worker)
 
