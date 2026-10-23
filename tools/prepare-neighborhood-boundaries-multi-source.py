@@ -170,6 +170,12 @@ class Seed:
     population: Optional[int] = None
     kind: str = "point"  # "point" ou "polygon"
     polygon: Optional[Any] = None  # shapely Polygon si kind == "polygon"
+    source_id: str = ""
+    source_subtype: str = ""
+    source_license: str = ""
+    source_detail: str = ""
+    source_ref: str = ""
+    source_release: str = ""
 
     @property
     def point(self) -> Point:
@@ -253,6 +259,12 @@ def load_overture_seeds(points_path: Optional[str]) -> List[Seed]:
             population=props.get("population"),
             kind="polygon" if geom.get("type") in {"Polygon", "MultiPolygon"} else "point",
             polygon=make_valid(shape(geom)) if geom.get("type") in {"Polygon", "MultiPolygon"} else None,
+            source_id=str(props.get("sourceId") or props.get("source_id") or ""),
+            source_subtype=str(props.get("sourceSubtype") or props.get("subtype") or ""),
+            source_license=str(props.get("sourceLicense") or props.get("license") or ""),
+            source_detail=str(props.get("sourceDetail") or ""),
+            source_ref=str(props.get("sourceRef") or ""),
+            source_release=str(props.get("sourceRelease") or ""),
         ))
     print(f"  -> Overture: {len(seeds)} seeds charges")
     return seeds
@@ -380,6 +392,11 @@ def osm_element_to_seed(element: dict) -> Optional[Seed]:
         name_fr=tags.get("name:fr", ""),
         kind="polygon" if polygon is not None else "point",
         polygon=polygon,
+        source_id=f"{element.get('type', '')}/{element.get('id', '')}",
+        source_subtype=str(tags.get("place") or tags.get("boundary") or ""),
+        source_license="ODbL-1.0",
+        source_detail="OpenStreetMap via Overpass",
+        source_ref=f"{element.get('type', '')}/{element.get('id', '')}",
     )
 
 
@@ -639,22 +656,36 @@ def assign_to_communes(seeds: List[Seed], communes: List[Dict]) -> Dict[str, Lis
     assignment: Dict[str, List[Seed]] = defaultdict(list)
 
     for seed in seeds:
-        # 1) contains
         containing = None
-        for idx in tree.query(seed.point):
-            if commune_geoms[int(idx)].contains(seed.point):
-                containing = communes[int(idx)]
-                break
-        if containing is None:
-            # 2) nearest sous 10 km
-            min_dist = float("inf")
-            for c, g in zip(communes, commune_geoms):
-                d = seed.point.distance(g)
-                if d < min_dist:
-                    min_dist = d
-                    containing = c
-            if min_dist > 0.1:  # ~10 km
+        # A mapped polygon belongs to the commune with the largest geometric overlap,
+        # not merely to the commune containing its representative point.
+        if seed.polygon is not None:
+            best_overlap = 0.0
+            for idx in tree.query(seed.polygon):
+                candidate_idx = int(idx)
+                try:
+                    overlap = seed.polygon.intersection(commune_geoms[candidate_idx]).area
+                except Exception:
+                    overlap = 0.0
+                if overlap > best_overlap:
+                    best_overlap = overlap
+                    containing = communes[candidate_idx]
+            if containing is None or best_overlap <= 0:
                 continue
+        else:
+            for idx in tree.query(seed.point):
+                if commune_geoms[int(idx)].contains(seed.point):
+                    containing = communes[int(idx)]
+                    break
+            if containing is None:
+                min_dist = float("inf")
+                for c, g in zip(communes, commune_geoms):
+                    d = seed.point.distance(g)
+                    if d < min_dist:
+                        min_dist = d
+                        containing = c
+                if min_dist > 0.1:  # ~10 km
+                    continue
         cid = containing["properties"].get("id") or containing["properties"].get("code")
         assignment[str(cid)].append(seed)
 
@@ -863,6 +894,20 @@ def main() -> int:
         stats["by_region"][region]["communes"] += 1
 
         for seed, poly in zip(seeds, polys):
+            # Mapped source boundaries are clipped to the selected commune to prevent
+            # overlaps into neighbouring municipalities.
+            if seed.polygon is not None:
+                try:
+                    poly = make_valid(poly.intersection(commune_geom))
+                    if poly.geom_type == "GeometryCollection":
+                        polygon_parts = [part for part in poly.geoms if part.geom_type in {"Polygon", "MultiPolygon"} and not part.is_empty]
+                        if not polygon_parts:
+                            continue
+                        poly = make_valid(unary_union(polygon_parts))
+                    if poly.is_empty or poly.geom_type not in {"Polygon", "MultiPolygon"}:
+                        continue
+                except Exception:
+                    continue
             agreement = len(getattr(seed, "sources", {seed.source}))
             stats["by_source"][seed.source] += 1
             stats["total"] += 1
@@ -888,6 +933,12 @@ def main() -> int:
                 "confidence": confidence,
                 "estimated": seed.polygon is None,
                 "population": seed.population,
+                "sourceId": seed.source_id,
+                "sourceSubtype": seed.source_subtype,
+                "sourceLicense": seed.source_license,
+                "sourceDetail": seed.source_detail,
+                "sourceRef": seed.source_ref,
+                "sourceRelease": seed.source_release,
             }
             features.append({
                 "type": "Feature",
