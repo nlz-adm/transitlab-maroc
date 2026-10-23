@@ -384,7 +384,7 @@ def osm_element_to_seed(element: dict) -> Optional[Seed]:
 
 
 def fetch_overpass(session: CachedSession) -> List[Seed]:
-    """Récupère les noms de quartiers et leurs géométries de surface depuis Overpass."""
+    """Récupère points et surfaces OSM ; ne jamais réduire un way fermé à son centre."""
     query = f"""[out:json][timeout:300];
 area["ISO3166-1"="MA"][admin_level=2]->.ma;
 (
