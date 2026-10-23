@@ -69,6 +69,19 @@ class UrbanBlockPolygonizationTests(unittest.TestCase):
             [],
         )
 
+    def test_road_clipping_reduces_polygonization_area_without_moving_bounds(self):
+        roads = [
+            LineString([(-1.0, 0.0), (1.0, 0.0)]),
+            LineString([(0.0, -1.0), (0.0, 1.0)]),
+            LineString([(0.5, 0.5), (0.8, 0.8)]),
+        ]
+        clipped = self.builder.clip_roads_to_working_bounds(roads, (-0.1, -0.1, 0.1, 0.1))
+        self.assertEqual(len(clipped), 2)
+        self.assertTrue(all(-0.1000001 <= line.bounds[0] <= 0.1000001 for line in clipped))
+        self.assertTrue(all(-0.1000001 <= line.bounds[2] <= 0.1000001 for line in clipped))
+        self.assertTrue(all(-0.1000001 <= line.bounds[1] <= 0.1000001 for line in clipped))
+        self.assertTrue(all(-0.1000001 <= line.bounds[3] <= 0.1000001 for line in clipped))
+
     def test_geojson_sequence_reader_handles_record_separators(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "records.geojsonseq"
