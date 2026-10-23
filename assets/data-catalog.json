@@ -43,20 +43,20 @@
     },
     "neighborhoodBoundaries": {
       "url": "assets/neighborhood-boundaries-index.json",
-      "features": 7204,
-      "mappedFeatures": 82,
-      "estimatedFeatures": 7122,
-      "communesWithFeatures": 1502,
+      "features": 49898,
+      "mappedFeatures": 73,
+      "estimatedFeatures": 49825,
+      "communesWithFeatures": 1348,
       "regions": 12,
-      "bytesCompressed": 293603,
-      "loading": "Uniquement les contours de quartiers cartographiés sont dessinés au zoom 11+ ; les secteurs Voronoï estimés sont masqués afin de ne pas être confondus avec de vrais quartiers.",
+      "bytesCompressed": 5890072,
+      "loading": "zones régionales visibles uniquement, zoom 13+ lorsque les limites administratives sont activées",
       "geometrySources": [
         "Contours cartographiés OpenStreetMap (place=neighbourhood/suburb/quarter)",
         "Secteurs indicatifs estimés à partir de lieux habités OpenStreetMap et des contours communaux"
       ],
-      "method": "82 contours cartographiés et 7 122 secteurs estimatifs (Voronoï ou découpages communaux) répartis dans 1 502 communes.",
-      "license": "ODbL 1.0",
-      "limitation": "Les secteurs estimatifs ne sont pas des limites officielles. Ce jeu est un fond de travail exploratoire temporaire, en attendant la validation des résultats du pipeline multi-sources."
+      "method": "73 contours cartographiés et 49825 secteurs estimatifs.",
+      "license": "ODbL 1.0 ; CC-BY 4.0",
+      "limitation": "Les polygones mappés proviennent d'OpenStreetMap. Les estimations combinent 6 sources ouvertes (Overture, OSM, GeoNames, Poste Maroc, Kontur/HDX, HCP) avec un score de confiance. Ce tracé n'est pas une limite officielle."
     },
     "basemap": {
       "url": "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
