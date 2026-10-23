@@ -263,9 +263,9 @@ def fetch_overpass(session: CachedSession) -> List[Seed]:
     query = f"""[out:json][timeout:300];
 area["ISO3166-1"="MA"][admin_level=2]->.ma;
 (
-  node["place"~"^({OSM_PLACE_TAGS})$"](area.ma);
-  way["place"~"^({OSM_PLACE_TAGS})$"](area.ma);
-  relation["place"~"^({OSM_PLACE_TAGS})$"](area.ma);
+  node(area.ma)["place"~"^({OSM_PLACE_TAGS})$"];
+  way(area.ma)["place"~"^({OSM_PLACE_TAGS})$"];
+  relation(area.ma)["place"~"^({OSM_PLACE_TAGS})$"];
 );
 out center;
 """
