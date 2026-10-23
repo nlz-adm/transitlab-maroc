@@ -218,8 +218,18 @@ jobs:
           git commit -m "data: actualiser les limites de quartiers multi-sources"
           git push --set-upstream origin "$BRANCH"
 
+          cat > "$RUNNER_TEMP/neighborhood-pr-body.md" <<'EOF'
+          ## Résumé
+
+          - Pipeline multi-sources exécuté avec les tests de régression.
+          - La sortie a passé les contrôles de volume, géométrie et couverture.
+          - Le catalogue est synchronisé avec l'index régional.
+
+          **À vérifier avant fusion :** comparer reports/neighborhood-coverage.md et inspecter visuellement au moins Casablanca, Rabat, Marrakech, Fès, Tanger, Agadir, Oujda, Laâyoune, Béni Mellal et Errachidia. Les secteurs estimatifs ne sont pas des limites officielles.
+          EOF
+
           gh pr create \
             --base main \
             --head "$BRANCH" \
             --title "data: actualiser les limites de quartiers multi-sources" \
-            --body "## Résumé\n- Pipeline multi-sources exécuté avec les tests de régression.\n- La sortie a passé les contrôles de volume, géométrie et couverture.\n- Le catalogue est synchronisé avec l'index régional.\n\n**À vérifier avant fusion :** comparer le rapport `reports/neighborhood-coverage.md` et inspecter visuellement au moins Casablanca, Rabat, Marrakech, Fès, Tanger, Agadir, Oujda, Laâyoune, Béni Mellal et Errachidia. Les secteurs estimatifs ne sont pas des limites officielles."
+            --body-file "$RUNNER_TEMP/neighborhood-pr-body.md"
