@@ -135,6 +135,8 @@ def main():
     
     features = data.get("features", [])
     print(f"  → {len(features)} features chargées")
+    if not features:
+        raise SystemExit("ERREUR: entrée GeoJSON vide ; index et données publiés conservés.")
     
     # Grouper par région
     by_region = defaultdict(list)
