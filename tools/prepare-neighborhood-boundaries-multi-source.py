@@ -50,7 +50,7 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 import requests
-from shapely.geometry import MultiPoint, Point, mapping, shape
+from shapely.geometry import MultiPoint, Point, Polygon, MultiPolygon, mapping, shape
 from shapely.ops import unary_union
 from shapely.strtree import STRtree
 from shapely.validation import make_valid
@@ -258,43 +258,153 @@ def load_overture_seeds(points_path: Optional[str]) -> List[Seed]:
     return seeds
 
 
+def _osm_geometry_coords(geometry: list) -> List[Tuple[float, float]]:
+    """Convertit la géométrie Overpass (lat/lon) en coordonnées Shapely (lon/lat)."""
+    coords: List[Tuple[float, float]] = []
+    for point in geometry or []:
+        try:
+            lon, lat = float(point["lon"]), float(point["lat"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        coords.append((lon, lat))
+    return coords
+
+
+def _stitch_osm_rings(members: list) -> List[List[Tuple[float, float]]]:
+    """Assemble les ways membres d'une relation OSM en anneaux fermés."""
+    segments = []
+    for member in members or []:
+        if member.get("type") != "way" or member.get("role", "outer") not in {"outer", "inner", ""}:
+            continue
+        coords = _osm_geometry_coords(member.get("geometry", []))
+        if len(coords) >= 2:
+            segments.append(coords)
+
+    rings: List[List[Tuple[float, float]]] = []
+    while segments:
+        ring = segments.pop(0)
+        changed = True
+        while changed and ring[0] != ring[-1]:
+            changed = False
+            for i, segment in enumerate(segments):
+                if segment[0] == ring[-1]:
+                    ring.extend(segment[1:])
+                elif segment[-1] == ring[-1]:
+                    ring.extend(list(reversed(segment[:-1])))
+                elif segment[-1] == ring[0]:
+                    ring = segment[:-1] + ring
+                elif segment[0] == ring[0]:
+                    ring = list(reversed(segment[1:])) + ring
+                else:
+                    continue
+                segments.pop(i)
+                changed = True
+                break
+        if len(ring) >= 4 and ring[0] == ring[-1]:
+            rings.append(ring)
+    return rings
+
+
+def _osm_element_polygon(element: dict) -> Optional[Any]:
+    """Retourne le vrai polygone d'un way fermé ou d'une relation surfacique OSM."""
+    element_type = element.get("type")
+    if element_type == "way":
+        coords = _osm_geometry_coords(element.get("geometry", []))
+        if len(coords) >= 4 and coords[0] == coords[-1]:
+            polygon = make_valid(Polygon(coords))
+            if not polygon.is_empty and polygon.area > 0:
+                return polygon
+        return None
+
+    if element_type != "relation":
+        return None
+
+    members = element.get("members", []) or []
+    outer_rings = _stitch_osm_rings([m for m in members if m.get("role", "outer") == "outer"])
+    inner_rings = _stitch_osm_rings([m for m in members if m.get("role") == "inner"])
+    polygons = []
+    for outer in outer_rings:
+        holes = []
+        shell = Polygon(outer)
+        for inner in inner_rings:
+            try:
+                if shell.contains(Point(inner[0])):
+                    holes.append(inner)
+            except Exception:
+                continue
+        polygon = make_valid(Polygon(outer, holes))
+        if polygon.geom_type == "Polygon":
+            if not polygon.is_empty and polygon.area > 0:
+                polygons.append(polygon)
+        elif polygon.geom_type == "MultiPolygon":
+            polygons.extend(part for part in polygon.geoms if not part.is_empty and part.area > 0)
+    if not polygons:
+        return None
+    result = make_valid(MultiPolygon(polygons)) if len(polygons) > 1 else polygons[0]
+    return None if result.is_empty else result
+
+
+def osm_element_to_seed(element: dict) -> Optional[Seed]:
+    """Convertit un élément place OSM en seed et conserve sa géométrie si elle est surfacique."""
+    tags = element.get("tags", {}) or {}
+    name = tags.get("name") or tags.get("name:fr") or tags.get("name:ar") or ""
+    if not name:
+        return None
+
+    polygon = _osm_element_polygon(element)
+    center = element.get("center") or {}
+    lat = center.get("lat")
+    lon = center.get("lon")
+    if polygon is not None:
+        point = polygon.representative_point()
+        lon, lat = point.x, point.y
+    elif element.get("type") == "node":
+        lat, lon = element.get("lat"), element.get("lon")
+    elif element.get("geometry"):
+        coords = _osm_geometry_coords(element.get("geometry", []))
+        if coords:
+            lon = sum(x for x, _ in coords) / len(coords)
+            lat = sum(y for _, y in coords) / len(coords)
+    if lat is None or lon is None:
+        return None
+
+    try:
+        lat, lon = float(lat), float(lon)
+    except (TypeError, ValueError):
+        return None
+    return Seed(
+        name=name,
+        lon=lon, lat=lat,
+        source="osm_overpass",
+        name_ar=tags.get("name:ar", ""),
+        name_fr=tags.get("name:fr", ""),
+        kind="polygon" if polygon is not None else "point",
+        polygon=polygon,
+    )
+
+
 def fetch_overpass(session: CachedSession) -> List[Seed]:
-    """Recupere les points place=quarter/suburb/neighbourhood/locality via Overpass."""
+    """Récupère les noms de quartiers et leurs géométries de surface depuis Overpass."""
     query = f"""[out:json][timeout:300];
 area["ISO3166-1"="MA"][admin_level=2]->.ma;
 (
   node(area.ma)["place"~"^({OSM_PLACE_TAGS})$"];
-  way(area.ma)["place"~"^({OSM_PLACE_TAGS})$"];
-  relation(area.ma)["place"~"^({OSM_PLACE_TAGS})$"];
+  way(area.ma)["place"~"^(quarter|suburb|neighbourhood)$"];
+  relation(area.ma)["place"~"^(quarter|suburb|neighbourhood)$"];
 );
-out center;
+out body geom;
 """
     last_err: Optional[Exception] = None
     for endpoint in OVERPASS_ENDPOINTS:
         try:
             resp = session.get(endpoint + "?data=" + requests.utils.quote(query))
+            resp.raise_for_status()
             data = resp.json()
-            seeds: List[Seed] = []
-            for el in data.get("elements", []):
-                tags = el.get("tags", {}) or {}
-                name = tags.get("name") or tags.get("name:fr") or tags.get("name:ar") or ""
-                if not name:
-                    continue
-                if "center" in el:
-                    lat, lon = el["center"]["lat"], el["center"]["lon"]
-                elif el.get("type") == "node":
-                    lat, lon = el["lat"], el["lon"]
-                else:
-                    continue
-                seeds.append(Seed(
-                    name=name,
-                    lon=lon, lat=lat,
-                    source="osm_overpass",
-                    name_ar=tags.get("name:ar", ""),
-                    name_fr=tags.get("name:fr", ""),
-                    kind="point",
-                ))
-            print(f"  -> Overpass: {len(seeds)} seeds (endpoint {endpoint.split('//')[1].split('/')[0]})")
+            seeds = [seed for element in data.get("elements", [])
+                     if (seed := osm_element_to_seed(element)) is not None]
+            mapped = sum(1 for seed in seeds if seed.polygon is not None)
+            print(f"  -> Overpass: {len(seeds)} seeds, dont {mapped} contours OSM conservés "
+                  f"(endpoint {endpoint.split('//')[1].split('/')[0]})")
             return seeds
         except Exception as e:
             last_err = e
@@ -494,13 +604,13 @@ def merge_seeds(all_seeds: List[Seed], merge_radius_km: float = 0.7) -> List[See
                 continue
             if na == nb:
                 # Fusion : garder celui avec le plus d'info
-                winner, loser = (i, j) if a.population or a.polygon else (j, i)
+                winner, loser = (i, j) if (a.polygon is not None, bool(a.population), len(a.name or "")) >= (b.polygon is not None, bool(b.population), len(b.name or "")) else (j, i)
                 removed.add(loser)
                 m = merged[winner]
                 m.sources = getattr(m, "sources", {m.source}) | {all_seeds[loser].source}
             elif na in nb or nb in na:
                 # Noms proches (un inclus dans l'autre)
-                winner, loser = (i, j) if len(na) >= len(nb) else (j, i)
+                winner, loser = (i, j) if (a.polygon is not None, len(na), bool(a.population)) >= (b.polygon is not None, len(nb), bool(b.population)) else (j, i)
                 removed.add(loser)
                 m = merged[winner]
                 m.sources = getattr(m, "sources", {m.source}) | {all_seeds[loser].source}
