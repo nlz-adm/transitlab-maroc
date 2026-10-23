@@ -8,6 +8,14 @@ on:
       - "tools/convert-multi-source-to-site-format.py"
       - "tests/**"
       - ".github/workflows/**"
+      - "assets/map-app.js"
+      - "assets/map-boot.js"
+      - "assets/population-choropleth.mjs"
+      - "assets/data-catalog.json"
+      - "assets/neighborhood-boundaries-index.json"
+      - "assets/neighborhood-boundaries/**"
+      - "carte-interactive-maroc.html"
+      - "sw.js"
   push:
     branches: [main]
     paths:
@@ -15,6 +23,14 @@ on:
       - "tools/convert-multi-source-to-site-format.py"
       - "tests/**"
       - ".github/workflows/**"
+      - "assets/map-app.js"
+      - "assets/map-boot.js"
+      - "assets/population-choropleth.mjs"
+      - "assets/data-catalog.json"
+      - "assets/neighborhood-boundaries-index.json"
+      - "assets/neighborhood-boundaries/**"
+      - "carte-interactive-maroc.html"
+      - "sw.js"
 
 permissions:
   contents: read
