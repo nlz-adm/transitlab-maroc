@@ -6,7 +6,7 @@ import {
 } from '../assets/population-choropleth.mjs';
 
 function channels(color) {
-  const match = /^rgb\\((\\d+),(\\d+),(\\d+)\\)$/.exec(color || '');
+  const match = /^rgb\((\d+),(\d+),(\d+)\)$/.exec(color || '');
   assert.ok(match, `Expected an rgb() colour, received: ${color}`);
   return match.slice(1).map(Number);
 }
@@ -16,7 +16,7 @@ test('the population ramp is continuous, ordered and has clear endpoints', () =>
   assert.equal(populationNeighborhoodColor(50000), 'rgb(103,25,15)');
   const samples = [0, 25, 100, 250, 500, 1000, 2000, 3500, 5000, 7500, 10000, 15000, 20000, 35000, 50000];
   const colors = samples.map(populationNeighborhoodColor);
-  assert.ok(colors.every((color) => /^rgb\\(\\d+,\\d+,\\d+\\)$/.test(color)));
+  assert.ok(colors.every((color) => /^rgb\(\d+,\d+,\d+\)$/.test(color)));
   assert.ok(new Set(colors).size >= 12, 'The ramp should expose many distinct intermediate colours');
   assert.notEqual(populationNeighborhoodColor(100), populationNeighborhoodColor(500));
   assert.notEqual(populationNeighborhoodColor(5000), populationNeighborhoodColor(20000));
