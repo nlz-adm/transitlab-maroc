@@ -14,9 +14,12 @@ Script de conversion qui transforme la sortie du pipeline multi-source (`assets/
 
 ### 2. `.github/workflows/update-neighborhoods.yml`
 Workflow GitHub Actions qui automatise la régénération des données :
-- **Déclencheur manuel** : onglet Actions → "Update Neighborhood Boundaries" → Run workflow
-- **Déclencheur planifié** : chaque dimanche à 3h UTC
-- **Déclencheur auto** : push sur les scripts du pipeline
+- **Déclencheur manuel uniquement** : onglet Actions → "Update Neighborhood Boundaries" → Run workflow
+- Le planning hebdomadaire et le déclenchement automatique sur push sont désactivés tant que le pipeline n'a pas passé les contrôles de qualité.
+
+## 🛡️ Garde-fous de publication
+
+Le jeu de limites déjà publié est conservé tant que le pipeline multi-sources ne produit pas une sortie valide. Le workflow compare la sortie au jeu en ligne et refuse de convertir ou commiter une sortie vide ou inférieure à 50 % du nombre de secteurs existant (avec un minimum absolu de 1 000) ; il exige aussi au moins 300 communes distinctes. Le déclenchement automatique restera désactivé jusqu'à ce qu'une génération et un contrôle visuel réussissent.
 
 ## 📊 Améliorations des données
 
@@ -41,7 +44,7 @@ Workflow GitHub Actions qui automatise la régénération des données :
 
 ### Option A : Régénération automatique (recommandé)
 
-Le workflow GitHub Actions s'exécute automatiquement chaque semaine. Pour forcer une exécution manuelle :
+Le workflow GitHub Actions est volontairement manuel uniquement. Il vérifie la sortie du pipeline avant conversion et échoue sans publier si le GeoJSON est vide, anormalement incomplet par rapport au jeu actuellement publié, ou couvre trop peu de communes. Pour lancer un essai :
 
 1. Allez dans l'onglet **Actions** du dépôt
 2. Sélectionnez **Update Neighborhood Boundaries**
