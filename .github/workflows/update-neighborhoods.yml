@@ -222,21 +222,21 @@ jobs:
               raise SystemExit("Impossible de synchroniser la version de l'index dans map-app.js.")
 
           cache_version = "maroc-v27-" + time.strftime("%Y%m%d", time.gmtime())
-          app = re.sub(r"maroc-v\\d+-\\d{8}", cache_version, app)
+          app = re.sub(r"maroc-v\d+-\d{8}", cache_version, app)
           app_path.write_text(app, encoding="utf-8")
 
           boot_path = Path("assets/map-boot.js")
-          boot = re.sub(r"maroc-v\\d+-\\d{8}", cache_version,
+          boot = re.sub(r"maroc-v\d+-\d{8}", cache_version,
                         boot_path.read_text(encoding="utf-8"))
           boot_path.write_text(boot, encoding="utf-8")
 
           html_path = Path("carte-interactive-maroc.html")
-          html = re.sub(r"maroc-v\\d+-\\d{8}", cache_version,
+          html = re.sub(r"maroc-v\d+-\d{8}", cache_version,
                         html_path.read_text(encoding="utf-8"))
           html_path.write_text(html, encoding="utf-8")
 
           sw_path = Path("sw.js")
-          sw = re.sub(r"transitlab-maroc-v\\d+-\\d{8}", "transitlab-" + cache_version,
+          sw = re.sub(r"transitlab-maroc-v\d+-\d{8}", "transitlab-" + cache_version,
                       sw_path.read_text(encoding="utf-8"))
           sw_path.write_text(sw, encoding="utf-8")
 
@@ -256,7 +256,7 @@ jobs:
           })
           catalog["version"] = cache_version
           catalog_path.write_text(
-              json.dumps(catalog, ensure_ascii=False, indent=2) + "\\n",
+              json.dumps(catalog, ensure_ascii=False, indent=2) + "\n",
               encoding="utf-8",
           )
           print(f"Catalogue synchronisé : {features} contours cartographiés, {len(regions)} régions, version {cache_version}.")
