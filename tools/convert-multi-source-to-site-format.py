@@ -144,7 +144,9 @@ def main():
         ]
         print(f"  → {len(features)} contours cartographiés conservés (estimations exclues)")
     if not features:
-        raise SystemExit("ERREUR: aucune géométrie éligible ; index et données publiés conservés.")
+        if args.mapped_only:
+            raise SystemExit("ERREUR: aucune géométrie éligible ; index et données publiés conservés.")
+        raise SystemExit("ERREUR: entrée GeoJSON vide ; index et données publiés conservés.")
     
     # Grouper par région
     by_region = defaultdict(list)
