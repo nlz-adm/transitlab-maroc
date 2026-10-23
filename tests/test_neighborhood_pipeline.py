@@ -119,6 +119,50 @@ class NeighborhoodPipelineTests(unittest.TestCase):
 
 
 class PublishedDataIntegrityTests(unittest.TestCase):
+    def test_converter_mapped_only_drops_voronoi_estimates(self):
+        import gzip
+
+        with tempfile.TemporaryDirectory() as tmp:
+            directory = Path(tmp)
+            source = directory / "input.geojson"
+            output_dir = directory / "regions"
+            index_path = directory / "index.json"
+            polygon = {
+                "type": "Polygon",
+                "coordinates": [[[-9.1, 32.3], [-9.0, 32.3], [-9.0, 32.4],
+                                 [-9.1, 32.4], [-9.1, 32.3]]],
+            }
+            source.write_text(json.dumps({
+                "type": "FeatureCollection",
+                "features": [
+                    {"type": "Feature", "properties": {
+                        "name": "Contour connu", "commune_id": "MA01101",
+                        "source": "osm_overpass", "estimated": False,
+                    }, "geometry": polygon},
+                    {"type": "Feature", "properties": {
+                        "name": "Cellule estimée", "commune_id": "MA01101",
+                        "source": "geonames", "estimated": True,
+                    }, "geometry": polygon},
+                ],
+            }), encoding="utf-8")
+
+            result = subprocess.run([
+                sys.executable, str(CONVERTER_PATH),
+                "--input", str(source),
+                "--output-dir", str(output_dir),
+                "--index", str(index_path),
+                "--mapped-only",
+            ], capture_output=True, text=True, check=False)
+
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            index = json.loads(index_path.read_text(encoding="utf-8"))
+            self.assertEqual(index["features"], 1)
+            self.assertEqual(index["mappedFeatures"], 1)
+            self.assertEqual(index["estimatedFeatures"], 0)
+            with gzip.open(output_dir / "07.geojson.gz", "rt", encoding="utf-8") as stream:
+                data = json.load(stream)
+            self.assertEqual(data["features"][0]["properties"]["boundaryKind"], "mapped")
+
     def test_neighborhood_index_matches_catalog_and_compressed_regions(self):
         import gzip
 
@@ -129,7 +173,7 @@ class PublishedDataIntegrityTests(unittest.TestCase):
         layer = catalog["layers"]["neighborhoodBoundaries"]
         regions = index["regions"]
 
-        self.assertEqual(len(regions), 12, "Les 12 régions administratives doivent être présentes.")
+        self.assertGreaterEqual(len(regions), 4, "La couverture des vrais contours doit concerner plusieurs régions.")
         self.assertGreater(index["features"], 0)
         self.assertEqual(sum(region["count"] for region in regions), index["features"])
         self.assertEqual(sum(region["mapped"] for region in regions), index["mappedFeatures"])
@@ -149,6 +193,12 @@ class PublishedDataIntegrityTests(unittest.TestCase):
                 self.assertEqual(geojson.get("type"), "FeatureCollection")
                 self.assertEqual(len(geojson.get("features", [])), region["count"])
                 self.assertTrue(geojson.get("features"), "Une région publiée ne doit pas être vide.")
+                if index.get("estimatedFeatures", 0) == 0:
+                    self.assertTrue(
+                        all((feature.get("properties") or {}).get("boundaryKind") == "mapped"
+                            for feature in geojson["features"]),
+                        "Un index mapped-only ne doit pas publier de cellules estimatives."
+                    )
 
     def test_frontend_cache_busting_versions_are_synchronized(self):
         import re
