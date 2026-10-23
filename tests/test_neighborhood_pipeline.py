@@ -11,6 +11,16 @@ from shapely.geometry import box
 ROOT = Path(__file__).resolve().parents[1]
 PIPELINE_PATH = ROOT / "tools" / "prepare-neighborhood-boundaries-multi-source.py"
 CONVERTER_PATH = ROOT / "tools" / "convert-multi-source-to-site-format.py"
+OVERTURE_FETCHER_PATH = ROOT / "tools" / "fetch-overture-neighborhood-areas.py"
+
+
+def load_overture_fetcher_module():
+    spec = importlib.util.spec_from_file_location("overture_neighborhood_fetcher", OVERTURE_FETCHER_PATH)
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
 
 
 def load_pipeline_module():
@@ -23,6 +33,59 @@ def load_pipeline_module():
 
 
 class NeighborhoodPipelineTests(unittest.TestCase):
+    def test_overture_import_accepts_only_named_moroccan_neighbourhood_areas(self):
+        module = load_overture_fetcher_module()
+        country = box(-10, 31, -9, 33)
+        polygon = {
+            "type": "Polygon",
+            "coordinates": [[[-9.8, 32.0], [-9.75, 32.0], [-9.75, 32.05],
+                             [-9.8, 32.05], [-9.8, 32.0]]],
+        }
+        raw = {
+            "type": "FeatureCollection",
+            "features": [
+                {"type": "Feature", "id": "ma-neighbourhood", "properties": {
+                    "country": "MA", "subtype": "neighborhood",
+                    "names": {"primary": "Quartier Test"}, "sources": [{"dataset": "OpenStreetMap", "record_id": "w123"}],
+                }, "geometry": polygon},
+                {"type": "Feature", "id": "city-locality", "properties": {
+                    "country": "MA", "subtype": "locality", "names": {"primary": "Safi"},
+                }, "geometry": polygon},
+                {"type": "Feature", "id": "foreign-neighbourhood", "properties": {
+                    "country": "DZ", "subtype": "neighborhood", "names": {"primary": "Foreign"},
+                }, "geometry": polygon},
+            ],
+        }
+        features, counts = module.normalize_overture_features(raw, country, "2026-10-23T12:00:00+00:00")
+        self.assertEqual(len(features), 1)
+        self.assertEqual(counts["skip_subtype"], 1)
+        self.assertEqual(counts["skip_country"], 1)
+        props = features[0]["properties"]
+        self.assertEqual(props["name"], "Quartier Test")
+        self.assertEqual(props["boundaryKind"], "mapped")
+        self.assertFalse(props["estimated"])
+        self.assertEqual(props["sourceLicense"], "ODbL-1.0")
+        self.assertEqual(props["sourceRef"], "w123")
+
+    def test_overture_polygon_dedup_replaces_same_named_old_shape_and_preserves_new_shapes(self):
+        module = load_overture_fetcher_module()
+        old = {
+            "type": "Feature", "properties": {"name": "Quartier Test", "boundaryKind": "mapped"},
+            "geometry": {"type": "Polygon", "coordinates": [[[-9.8, 32.0], [-9.75, 32.0], [-9.75, 32.05], [-9.8, 32.05], [-9.8, 32.0]]]},
+        }
+        replacement = {
+            "type": "Feature", "properties": {"name": "Quartier Test", "sourceSubtype": "neighborhood", "boundaryKind": "mapped"},
+            "geometry": {"type": "Polygon", "coordinates": [[[-9.8, 32.0], [-9.745, 32.0], [-9.745, 32.05], [-9.8, 32.05], [-9.8, 32.0]]]},
+        }
+        new = {
+            "type": "Feature", "properties": {"name": "Autre Quartier", "sourceSubtype": "neighborhood", "boundaryKind": "mapped"},
+            "geometry": {"type": "Polygon", "coordinates": [[[-9.6, 32.0], [-9.55, 32.0], [-9.55, 32.05], [-9.6, 32.05], [-9.6, 32.0]]]},
+        }
+        merged, net_new = module.merge_mapped_features([old], [replacement, new])
+        self.assertEqual(len(merged), 2)
+        self.assertEqual(net_new, 1)
+        self.assertEqual(merged[0]["properties"]["sourceSubtype"], "neighborhood")
+
     def test_overpass_closed_way_keeps_its_actual_neighborhood_polygon(self):
         module = load_pipeline_module()
         element = {

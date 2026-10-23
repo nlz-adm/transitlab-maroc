@@ -78,6 +78,12 @@ def convert_feature(feature: dict) -> dict:
         "sourceAgreement": props.get("sourceAgreement", 1),
         "confidence": props.get("confidence", 0.5),
         "population": props.get("population"),
+        "sourceId": props.get("sourceId", ""),
+        "sourceSubtype": props.get("sourceSubtype", ""),
+        "sourceLicense": props.get("sourceLicense", ""),
+        "sourceDetail": props.get("sourceDetail", ""),
+        "sourceRef": props.get("sourceRef", ""),
+        "sourceRelease": props.get("sourceRelease", ""),
     }
     
     return {
