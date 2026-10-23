@@ -1,0 +1,88 @@
+name: Update Neighborhood Boundaries
+
+on:
+  workflow_dispatch:  # Déclenchement manuel
+  schedule:
+    - cron: '0 3 * * 0'  # Chaque dimanche à 3h UTC
+  push:
+    paths:
+      - 'tools/prepare-neighborhood-boundaries-multi-source.py'
+      - 'tools/convert-multi-source-to-site-format.py'
+    branches:
+      - main
+
+jobs:
+  update-neighborhoods:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install "shapely>=2.1" requests openpyxl
+    
+    - name: Run multi-source pipeline
+      run: |
+        mkdir -p reports
+        python tools/prepare-neighborhood-boundaries-multi-source.py \
+          --areas assets/data/division_area.geojson \
+          --points assets/data/division.geojson \
+          --postal data/codes-postaux-quartiers-2018.xlsx \
+          --output assets/data/neighborhoods-estimated.geojson \
+          --report reports/neighborhood-coverage.md
+      env:
+        TRANSITLAB_CACHE: ~/.cache/transitlab-maroc
+    
+    - name: Convert to site format
+      run: |
+        python tools/convert-multi-source-to-site-format.py \
+          --input assets/data/neighborhoods-estimated.geojson \
+          --output-dir assets/neighborhood-boundaries \
+          --index assets/neighborhood-boundaries-index.json
+    
+    - name: Check for changes
+      id: git-check
+      run: |
+        git add assets/neighborhood-boundaries/ assets/neighborhood-boundaries-index.json reports/
+        if git diff --staged --quiet; then
+          echo "changes=false" >> $GITHUB_OUTPUT
+        else
+          echo "changes=true" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: Commit and push changes
+      if: steps.git-check.outputs.changes == 'true'
+      run: |
+        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+        git commit -m "chore(data): mise à jour automatique des limites de quartiers
+        
+        Pipeline multi-source exécuté le $(date -u +%Y-%m-%d)
+        
+        - Sources : Overture + OSM Overpass + GeoNames + Poste Maroc + Kontur/HDX + HCP
+        - Couverture : voir reports/neighborhood-coverage.md
+        - Fichiers mis à jour :
+          - assets/neighborhood-boundaries/*.geojson.gz (12 régions)
+          - assets/neighborhood-boundaries-index.json
+          - reports/neighborhood-coverage.md
+        
+        Co-authored-by: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>"
+        git push
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: No changes detected
+      if: steps.git-check.outputs.changes == 'false'
+      run: echo "Aucun changement détecté, pas de commit nécessaire."
