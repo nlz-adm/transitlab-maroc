@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "tools/prepare-neighborhood-boundaries-multi-source.py"
+      - "tools/fetch-overture-neighborhood-areas.py"
       - "tools/convert-multi-source-to-site-format.py"
       - "tests/**"
       - ".github/workflows/**"
@@ -20,6 +21,7 @@ on:
     branches: [main]
     paths:
       - "tools/prepare-neighborhood-boundaries-multi-source.py"
+      - "tools/fetch-overture-neighborhood-areas.py"
       - "tools/convert-multi-source-to-site-format.py"
       - "tests/**"
       - ".github/workflows/**"
