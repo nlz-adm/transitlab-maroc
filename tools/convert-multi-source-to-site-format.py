@@ -144,6 +144,8 @@ def main():
     parser.add_argument("--mapped-only", action="store_true",
                         help="Exclure les anciennes cellules Voronoï synthétiques")
     parser.add_argument("--urban-blocks", help="GeoJSON des îlots urbains estimés, issus des rues et bâtiments OSM")
+    parser.add_argument("--min-urban-blocks", type=int, default=10000,
+                        help="Nombre minimal d'îlots urbains requis avant publication (défaut : 10000)")
     args = parser.parse_args()
     
     # Charger les données
@@ -171,8 +173,8 @@ def main():
             and (feature.get("properties") or {}).get("estimated") is True
             and (feature.get("geometry") or {}).get("type") in {"Polygon", "MultiPolygon"}
         ]
-        if len(blocks) < 10000:
-            raise SystemExit(f"Seulement {len(blocks)} îlots urbains estimés ; 10000 requis. Données publiées conservées.")
+        if len(blocks) < args.min_urban_blocks:
+            raise SystemExit(f"Seulement {len(blocks)} îlots urbains estimés ; {args.min_urban_blocks} requis. Données publiées conservées.")
         features.extend(blocks)
         urban_block_count = len(blocks)
         print(f"  → {urban_block_count} îlots urbains estimés retenus, distincts des quartiers cartographiés")
