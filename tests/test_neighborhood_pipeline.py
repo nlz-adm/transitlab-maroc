@@ -114,6 +114,22 @@ class PublishedDataIntegrityTests(unittest.TestCase):
         self.assertIn(expected, service_worker)
         self.assertIn(expected, service_worker.splitlines()[0])
 
+    def test_frontend_neighborhood_overlay_and_population_fallback_are_wired(self):
+        index = json.loads((ROOT / "assets" / "neighborhood-boundaries-index.json").read_text(encoding="utf-8"))
+        app = (ROOT / "assets" / "map-app.js").read_text(encoding="utf-8")
+        helper = (ROOT / "assets" / "population-choropleth.mjs").read_text(encoding="utf-8")
+        worker = (ROOT / "sw.js").read_text(encoding="utf-8")
+
+        self.assertIn(f"NEIGHBORHOOD_BOUNDARY_VERSION='{index['version']}'", app)
+        self.assertIn("import { populationNeighborhoodColor, estimateDensityFromNearbyCells }", app)
+        self.assertIn("densityMethod='interpolated'", app)
+        self.assertIn("estimateDensityFromNearbyCells(center,cells,{maxDistanceKm:1.5,maxNeighbors:3})", app)
+        self.assertIn("boundaryFeatureBbox(feature)", app)
+        self.assertIn("neighborhoodHaloPane", app)
+        self.assertIn("export function populationNeighborhoodColor", helper)
+        self.assertIn("request.mode === 'navigate'", worker)
+        self.assertIn("fetch(request, { cache: 'no-cache' })", worker)
+
     def test_pwa_manifest_icons_and_service_worker_precache_exist(self):
         import re
 
