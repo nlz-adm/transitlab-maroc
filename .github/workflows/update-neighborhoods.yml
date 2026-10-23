@@ -7,6 +7,7 @@ on:
     paths:
       - "tools/prepare-neighborhood-boundaries-multi-source.py"
       - "tools/fetch-overture-neighborhood-areas.py"
+      - "tools/assign-mapped-neighborhood-polygons.py"
       - "tools/convert-multi-source-to-site-format.py"
       - "tools/build-urban-block-sectors.py"
       - ".github/workflows/update-neighborhoods.yml"
@@ -141,66 +142,47 @@ jobs:
             --output assets/data/mapped-neighborhood-seeds-combined.geojson \
             --report reports/overture-neighborhood-coverage.md
 
-      - name: Generate neighbourhood geometry
+      - name: Assign mapped neighbourhood polygons to communes
         run: |
-          python tools/prepare-neighborhood-boundaries-multi-source.py \
-            --areas assets/data/division_area.geojson \
-            --points assets/data/mapped-neighborhood-seeds-combined.geojson \
+          python tools/assign-mapped-neighborhood-polygons.py \
+            --communes assets/data/division_area.geojson \
+            --mapped-seeds assets/data/mapped-neighborhood-seeds-combined.geojson \
             --output assets/data/neighborhoods-estimated.geojson \
-            --report reports/neighborhood-coverage.md
-        env:
-          TRANSITLAB_CACHE: ${{ runner.temp }}/transitlab-maroc-cache
+            --report reports/mapped-neighborhood-coverage.md \
+            --min-polygons 30
 
-      - name: Validate generated data before conversion
+      - name: Validate source-mapped polygons before sector generation
         run: |
           python - <<'PY'
           import json
-          import math
           from pathlib import Path
 
           generated = json.loads(Path("assets/data/neighborhoods-estimated.geojson").read_text(encoding="utf-8"))
           features = generated.get("features", [])
-          published = json.loads(Path("assets/neighborhood-boundaries-index.json").read_text(encoding="utf-8"))
-          baseline = int(published.get("features", 0))
-          minimum = max(1000, math.ceil(baseline * 0.5))
-          baseline_mapped = int(published.get("mappedFeatures", 0))
+          mapped = [
+              feature for feature in features
+              if (feature.get("properties") or {}).get("boundaryKind") == "mapped"
+              and (feature.get("properties") or {}).get("estimated") is False
+          ]
           communes = {
-              str((f.get("properties") or {}).get("commune_id"))
-              for f in features
-              if (f.get("properties") or {}).get("commune_id")
+              str((feature.get("properties") or {}).get("commune_id"))
+              for feature in mapped if (feature.get("properties") or {}).get("commune_id")
           }
-          polygon_features = [
-              f for f in features
-              if (f.get("geometry") or {}).get("type") in {"Polygon", "MultiPolygon"}
-          ]
-          mapped_features = [
-              f for f in features
-              if not (f.get("properties") or {}).get("estimated", True)
-          ]
-
-          print(f"Sortie pipeline : {len(features)} secteurs ; {len(communes)} communes ; {len(mapped_features)} contours cartographiés")
-          required_mapped = max(30, baseline_mapped)
-          if len(mapped_features) < required_mapped:
-              raise SystemExit(
-                  f"Sortie refusée : {len(mapped_features)} contours cartographiés contre "
-                  f"{required_mapped} requis ; la version publiée est conservée."
-              )
-          print(f"Seuil de publication : {minimum} secteurs et 300 communes minimum")
-          if len(features) < minimum:
-              raise SystemExit(
-                  f"Sortie refusée : {len(features)} secteurs, minimum attendu {minimum}. "
-                  "Le jeu publié est conservé."
-              )
-          if len(communes) < 300:
-              raise SystemExit(
-                  f"Sortie refusée : seulement {len(communes)} communes couvertes. "
-                  "Le jeu publié est conservé."
-              )
-          if len(polygon_features) < math.ceil(len(features) * 0.99):
-              raise SystemExit("Sortie refusée : plus de 1 % des géométries ne sont pas polygonales.")
-          if any(not (f.get("properties") or {}).get("name") for f in features):
-              raise SystemExit("Sortie refusée : au moins un secteur n'a pas de nom.")
-          print("Contrôles de sortie réussis.")
+          regions = {
+              str((feature.get("properties") or {}).get("region_code"))
+              for feature in mapped if (feature.get("properties") or {}).get("region_code")
+          }
+          if len(mapped) < 30:
+              raise SystemExit(f"Seulement {len(mapped)} vrais contours cartographiés ; 30 minimum.")
+          if len(communes) < 20 or len(regions) < 4:
+              raise SystemExit(f"Couverture cartographiée insuffisante : {len(communes)} communes, {len(regions)} régions.")
+          if len(mapped) != len(features):
+              raise SystemExit("L'entrée contient des cellules estimées ; elles ne doivent pas alimenter la couche de contours.")
+          if any((feature.get("geometry") or {}).get("type") not in {"Polygon", "MultiPolygon"} for feature in mapped):
+              raise SystemExit("Au moins un contour source n'est pas un polygone.")
+          if any(not (feature.get("properties") or {}).get("name") for feature in mapped):
+              raise SystemExit("Au moins un contour cartographié n'a pas de nom.")
+          print(f"Contours cartographiés validés : {len(mapped)}, {len(communes)} communes, {len(regions)} régions. Aucune cellule estimative.")
           PY
 
       - name: Download current Morocco OSM extract and export road/building geometry
