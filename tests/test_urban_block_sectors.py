@@ -89,6 +89,33 @@ class UrbanBlockPolygonizationTests(unittest.TestCase):
         self.assertEqual(set(ordered), set(keys))
         self.assertNotEqual(ordered, sorted(keys))
 
+    def test_target_sample_is_round_robin_across_tiles(self):
+        features = []
+        for tile, count in [("-3:2", 8), ("0:0", 3), ("9:4", 6), ("5:-2", 4)]:
+            for i in range(count):
+                features.append({
+                    "type": "Feature",
+                    "id": f"{tile}:{i:02d}",
+                    "properties": {"_samplingTile": tile},
+                })
+        sampled = self.builder.sample_features_by_tile(features, 10)
+        self.assertEqual(len(sampled), 10)
+        counts = {}
+        for feature in sampled:
+            tile = feature["properties"]["_samplingTile"]
+            counts[tile] = counts.get(tile, 0) + 1
+        self.assertEqual(len(counts), 4, "The sample should represent every active tile when possible.")
+        self.assertLessEqual(max(counts.values()) - min(counts.values()), 1)
+        self.assertEqual(sampled, self.builder.sample_features_by_tile(list(reversed(features)), 10))
+
+    def test_unlimited_tile_sample_keeps_all_candidates(self):
+        features = [
+            {"type": "Feature", "id": "a", "properties": {"_samplingTile": "1:1"}},
+            {"type": "Feature", "id": "b", "properties": {"_samplingTile": "1:2"}},
+            {"type": "Feature", "id": "c", "properties": {"_samplingTile": "1:1"}},
+        ]
+        self.assertEqual(len(self.builder.sample_features_by_tile(features, 0)), 3)
+
     def test_sector_cap_stops_exactly_at_target_but_zero_is_unlimited(self):
         self.assertFalse(self.builder.reached_sector_cap(9999, 10000))
         self.assertTrue(self.builder.reached_sector_cap(10000, 10000))
