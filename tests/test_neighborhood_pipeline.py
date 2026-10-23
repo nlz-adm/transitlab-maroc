@@ -127,7 +127,7 @@ class PublishedDataIntegrityTests(unittest.TestCase):
         end = worker.find("];", start)
         self.assertGreaterEqual(start, 0, "Liste de précache du service worker introuvable.")
         self.assertGreater(end, start, "Liste de précache du service worker incomplète.")
-        assets = re.findall(r"['\\"]([^'\\"]+)['\\"]", worker[start:end])
+        assets = re.findall(r"""['"]([^'"]+)['"]""", worker[start:end])
         for asset in assets:
             with self.subTest(asset=asset):
                 if asset.startswith("./"):
