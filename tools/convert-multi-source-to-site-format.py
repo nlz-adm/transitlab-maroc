@@ -126,6 +126,8 @@ def main():
     parser.add_argument("--input", required=True, help="GeoJSON du pipeline")
     parser.add_argument("--output-dir", required=True, help="Dossier de sortie")
     parser.add_argument("--index", required=True, help="Fichier index de sortie")
+    parser.add_argument("--mapped-only", action="store_true",
+                        help="Publier uniquement les contours réellement cartographiés, sans Voronoï estimatif")
     args = parser.parse_args()
     
     # Charger les données
@@ -135,8 +137,14 @@ def main():
     
     features = data.get("features", [])
     print(f"  → {len(features)} features chargées")
+    if args.mapped_only:
+        features = [
+            feature for feature in features
+            if (feature.get("properties") or {}).get("estimated") is False
+        ]
+        print(f"  → {len(features)} contours cartographiés conservés (estimations exclues)")
     if not features:
-        raise SystemExit("ERREUR: entrée GeoJSON vide ; index et données publiés conservés.")
+        raise SystemExit("ERREUR: aucune géométrie éligible ; index et données publiés conservés.")
     
     # Grouper par région
     by_region = defaultdict(list)
@@ -151,6 +159,10 @@ def main():
     # Créer le dossier de sortie
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
+    if args.mapped_only:
+        # Eliminate unreferenced legacy files so estimates cannot linger on the site.
+        for old_file in output_dir.glob("*.geojson.gz"):
+            old_file.unlink()
     
     # Générer les fichiers régionaux
     index_regions = []
