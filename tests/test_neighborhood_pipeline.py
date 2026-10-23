@@ -114,6 +114,25 @@ class PublishedDataIntegrityTests(unittest.TestCase):
         self.assertIn(expected, service_worker)
         self.assertIn(expected, service_worker.splitlines()[0])
 
+    def test_pwa_manifest_icons_and_service_worker_precache_exist(self):
+        import re
+
+        manifest = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))
+        for icon in manifest.get("icons", []):
+            with self.subTest(icon=icon.get("src")):
+                self.assertTrue((ROOT / icon["src"]).is_file(), f"Icône PWA manquante : {icon['src']}")
+
+        worker = (ROOT / "sw.js").read_text(encoding="utf-8")
+        match = re.search(r"const STATIC_ASSETS = \\[(.*?)\\];", worker, re.S)
+        self.assertIsNotNone(match, "Liste de précache du service worker introuvable.")
+        assets = re.findall(r"['\"]([^'\"]+)['\"]", match.group(1))
+        for asset in assets:
+            with self.subTest(asset=asset):
+                if asset.startswith("./"):
+                    asset = asset[2:]
+                if asset:
+                    self.assertTrue((ROOT / asset).is_file(), f"Ressource PWA en précache absente : {asset}")
+
 
 if __name__ == "__main__":
     unittest.main()
