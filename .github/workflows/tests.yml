@@ -37,5 +37,10 @@ jobs:
           node-version: "20"
       - name: Run regression tests
         run: python -m unittest discover -s tests -v
+      - name: Check JavaScript syntax
+        run: |
+          node --check sw.js
+          node --check assets/population-choropleth.mjs
+          node --input-type=module --check < assets/map-app.js
       - name: Run population choropleth tests
         run: node --test tests/test_population_choropleth.mjs
