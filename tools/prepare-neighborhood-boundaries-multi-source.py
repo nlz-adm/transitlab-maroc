@@ -240,14 +240,14 @@ def load_overture_seeds(points_path: Optional[str]) -> List[Seed]:
         elif geom.get("type") in {"Polygon", "MultiPolygon"}:
             # Utiliser le centroide comme seed + conserver le polygone
             g = make_valid(shape(geom))
-            c = g.centroid
+            c = g.representative_point()
             lon, lat = c.x, c.y
         else:
             continue
         seeds.append(Seed(
             name=name,
             lon=lon, lat=lat,
-            source="overture",
+            source=str(props.get("source") or "overture"),
             name_ar=props.get("name_ar", ""),
             name_fr=props.get("name_fr", ""),
             population=props.get("population"),
