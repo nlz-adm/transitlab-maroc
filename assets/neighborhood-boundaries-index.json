@@ -6,31 +6,31 @@
       "code": "01",
       "url": "assets/neighborhood-boundaries/01.geojson.gz",
       "bbox": [
-        -5.8716,
-        35.16294,
-        -3.85568,
-        35.76661
+        -6.1501658,
+        35.1629407,
+        -3.8556816,
+        35.8259930333781
       ],
-      "count": 3,
-      "mapped": 3,
+      "count": 22,
+      "mapped": 22,
       "estimated": 0,
-      "communes": 3,
-      "bytesCompressed": 764
+      "communes": 7,
+      "bytesCompressed": 34616
     },
     {
       "code": "02",
       "url": "assets/neighborhood-boundaries/02.geojson.gz",
       "bbox": [
-        -1.97976,
+        -3.6817468,
         32.0852029,
         -1.2131964,
-        34.65502
+        35.2080207
       ],
-      "count": 20,
-      "mapped": 20,
+      "count": 32,
+      "mapped": 32,
       "estimated": 0,
-      "communes": 3,
-      "bytesCompressed": 7522
+      "communes": 7,
+      "bytesCompressed": 10393
     },
     {
       "code": "03",
@@ -39,58 +39,58 @@
         -5.5664334,
         33.37551,
         -3.97566,
-        34.054254
+        34.075505
       ],
-      "count": 5,
-      "mapped": 5,
+      "count": 18,
+      "mapped": 18,
       "estimated": 0,
-      "communes": 4,
-      "bytesCompressed": 1592
+      "communes": 6,
+      "bytesCompressed": 9347
     },
     {
       "code": "04",
       "url": "assets/neighborhood-boundaries/04.geojson.gz",
       "bbox": [
-        -6.90615,
-        33.82623,
-        -6.0773,
-        34.26996
+        -6.930574815999638,
+        33.826234,
+        -6.0662096,
+        34.2699597
       ],
-      "count": 13,
-      "mapped": 13,
+      "count": 35,
+      "mapped": 35,
       "estimated": 0,
       "communes": 6,
-      "bytesCompressed": 2169
+      "bytesCompressed": 42901
     },
     {
       "code": "05",
       "url": "assets/neighborhood-boundaries/05.geojson.gz",
       "bbox": [
-        -7.00316,
-        31.73307,
+        -7.0031647,
+        31.7330715,
         -6.250459,
         32.6133603
       ],
-      "count": 13,
-      "mapped": 13,
+      "count": 14,
+      "mapped": 14,
       "estimated": 0,
       "communes": 3,
-      "bytesCompressed": 2075
+      "bytesCompressed": 2972
     },
     {
       "code": "06",
       "url": "assets/neighborhood-boundaries/06.geojson.gz",
       "bbox": [
-        -8.36233,
-        33.26924,
-        -7.51984,
-        33.58792
+        -8.5927104,
+        32.86221732157091,
+        -7.4555983827560866,
+        33.64090759936179
       ],
-      "count": 12,
-      "mapped": 12,
+      "count": 76,
+      "mapped": 76,
       "estimated": 0,
-      "communes": 4,
-      "bytesCompressed": 1582
+      "communes": 8,
+      "bytesCompressed": 63235
     },
     {
       "code": "07",
@@ -98,52 +98,67 @@
       "bbox": [
         -9.7727208,
         31.5108878,
-        -7.98468,
-        32.32878
+        -7.8847385,
+        32.3287832
       ],
-      "count": 10,
-      "mapped": 10,
+      "count": 20,
+      "mapped": 20,
       "estimated": 0,
       "communes": 5,
-      "bytesCompressed": 2392
+      "bytesCompressed": 19576
     },
     {
       "code": "08",
       "url": "assets/neighborhood-boundaries/08.geojson.gz",
       "bbox": [
         -6.9107112,
-        30.9247394,
-        -5.31521,
-        31.63283
+        29.9776491,
+        -5.3152101,
+        31.6328279
       ],
-      "count": 5,
-      "mapped": 5,
+      "count": 6,
+      "mapped": 6,
       "estimated": 0,
-      "communes": 3,
-      "bytesCompressed": 980
+      "communes": 4,
+      "bytesCompressed": 1624
     },
     {
       "code": "09",
       "url": "assets/neighborhood-boundaries/09.geojson.gz",
       "bbox": [
-        -8.8748965,
-        30.47164,
-        -7.9142,
-        30.53214
+        -10.010086739323214,
+        29.506924643111464,
+        -7.9142006,
+        30.8397525
       ],
-      "count": 2,
-      "mapped": 2,
+      "count": 65,
+      "mapped": 65,
       "estimated": 0,
-      "communes": 2,
-      "bytesCompressed": 1465
+      "communes": 15,
+      "bytesCompressed": 31377
+    },
+    {
+      "code": "11",
+      "url": "assets/neighborhood-boundaries/11.geojson.gz",
+      "bbox": [
+        -13.2067308,
+        27.1479987,
+        -13.2056403,
+        27.1488236
+      ],
+      "count": 1,
+      "mapped": 1,
+      "estimated": 0,
+      "communes": 1,
+      "bytesCompressed": 478
     }
   ],
-  "features": 83,
-  "mappedFeatures": 83,
+  "features": 289,
+  "mappedFeatures": 289,
   "estimatedFeatures": 0,
-  "communesWithFeatures": 33,
+  "communesWithFeatures": 62,
   "communesTotal": 1502,
-  "coverage": 2.2,
+  "coverage": 4.1,
   "sources": {
     "mappedGeometry": "Polygones OpenStreetMap (place=neighbourhood/suburb/quarter)",
     "estimatedGeometry": "Cellules Voronoi multi-sources (Overture + OSM + GeoNames + Poste Maroc)",

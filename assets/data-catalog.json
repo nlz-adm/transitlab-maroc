@@ -43,18 +43,18 @@
     },
     "neighborhoodBoundaries": {
       "url": "assets/neighborhood-boundaries-index.json",
-      "features": 83,
-      "mappedFeatures": 83,
+      "features": 289,
+      "mappedFeatures": 289,
       "estimatedFeatures": 0,
-      "communesWithFeatures": 33,
-      "regions": 9,
-      "bytesCompressed": 20541,
+      "communesWithFeatures": 62,
+      "regions": 10,
+      "bytesCompressed": 216519,
       "loading": "Contours de quartiers cartographiés uniquement, chargés à partir du zoom 11+ ; les cellules estimées sont exclues.",
       "geometrySources": [
         "Contours cartographiés OpenStreetMap (place=neighbourhood/suburb/quarter)",
         "Secteurs indicatifs estimés à partir de lieux habités OpenStreetMap et des contours communaux"
       ],
-      "method": "83 polygones cartographiés avec géométrie source conservée.",
+      "method": "289 polygones cartographiés avec géométrie source conservée.",
       "license": "ODbL 1.0 ; CC-BY 4.0",
       "limitation": "La couverture varie selon la ville ; aucune cellule Voronoï estimative n’est publiée comme quartier."
     },
