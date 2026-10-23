@@ -1,0 +1,225 @@
+name: Update Neighborhood Boundaries
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: update-neighborhood-boundaries
+  cancel-in-progress: false
+
+jobs:
+  update-neighborhoods:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install "shapely>=2.1" requests openpyxl
+
+      - name: Run regression tests
+        run: python -m unittest discover -s tests -v
+
+      - name: Build commune input
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          regions = {
+              "01": "Tanger-Tétouan-Al Hoceïma",
+              "02": "Oriental",
+              "03": "Fès-Meknès",
+              "04": "Rabat-Salé-Kénitra",
+              "05": "Béni Mellal-Khénifra",
+              "06": "Casablanca-Settat",
+              "07": "Marrakech-Safi",
+              "08": "Drâa-Tafilalet",
+              "09": "Souss-Massa",
+              "10": "Guelmim-Oued Noun",
+              "11": "Laâyoune-Sakia El Hamra",
+              "12": "Dakhla-Oued Ed-Dahab",
+          }
+          features = []
+          for code, name in regions.items():
+              path = Path(f"assets/commune-boundaries/{code}.geojson")
+              if not path.exists():
+                  raise SystemExit(f"Fichier communal absent : {path}")
+              data = json.loads(path.read_text(encoding="utf-8"))
+              for feature in data.get("features", []):
+                  props = feature.setdefault("properties", {})
+                  props.setdefault("region", name)
+                  props["region_code"] = code
+                  features.append(feature)
+
+          if len(features) < 1000:
+              raise SystemExit(f"Entrée administrative incomplète : {len(features)} communes")
+          target = Path("assets/data/division_area.geojson")
+          target.parent.mkdir(parents=True, exist_ok=True)
+          target.write_text(
+              json.dumps({"type": "FeatureCollection", "features": features}, ensure_ascii=False),
+              encoding="utf-8",
+          )
+          print(f"Entrée construite : {len(features)} communes")
+          PY
+
+      - name: Generate neighbourhood geometry
+        run: |
+          python tools/prepare-neighborhood-boundaries-multi-source.py \
+            --areas assets/data/division_area.geojson \
+            --output assets/data/neighborhoods-estimated.geojson \
+            --report reports/neighborhood-coverage.md
+        env:
+          TRANSITLAB_CACHE: ${{ runner.temp }}/transitlab-maroc-cache
+
+      - name: Validate generated data before conversion
+        run: |
+          python - <<'PY'
+          import json
+          import math
+          from pathlib import Path
+
+          generated = json.loads(Path("assets/data/neighborhoods-estimated.geojson").read_text(encoding="utf-8"))
+          features = generated.get("features", [])
+          published = json.loads(Path("assets/neighborhood-boundaries-index.json").read_text(encoding="utf-8"))
+          baseline = int(published.get("features", 0))
+          minimum = max(1000, math.ceil(baseline * 0.5))
+          communes = {
+              str((f.get("properties") or {}).get("commune_id"))
+              for f in features
+              if (f.get("properties") or {}).get("commune_id")
+          }
+          polygon_features = [
+              f for f in features
+              if (f.get("geometry") or {}).get("type") in {"Polygon", "MultiPolygon"}
+          ]
+
+          print(f"Sortie pipeline : {len(features)} secteurs ; {len(communes)} communes")
+          print(f"Seuil de publication : {minimum} secteurs et 300 communes minimum")
+          if len(features) < minimum:
+              raise SystemExit(
+                  f"Sortie refusée : {len(features)} secteurs, minimum attendu {minimum}. "
+                  "Le jeu publié est conservé."
+              )
+          if len(communes) < 300:
+              raise SystemExit(
+                  f"Sortie refusée : seulement {len(communes)} communes couvertes. "
+                  "Le jeu publié est conservé."
+              )
+          if len(polygon_features) < math.ceil(len(features) * 0.99):
+              raise SystemExit("Sortie refusée : plus de 1 % des géométries ne sont pas polygonales.")
+          if any(not (f.get("properties") or {}).get("name") for f in features):
+              raise SystemExit("Sortie refusée : au moins un secteur n'a pas de nom.")
+          print("Contrôles de sortie réussis.")
+          PY
+
+      - name: Convert validated data to site format
+        run: |
+          python tools/convert-multi-source-to-site-format.py \
+            --input assets/data/neighborhoods-estimated.geojson \
+            --output-dir assets/neighborhood-boundaries \
+            --index assets/neighborhood-boundaries-index.json
+
+      - name: Synchronize data catalog
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          index_path = Path("assets/neighborhood-boundaries-index.json")
+          catalog_path = Path("assets/data-catalog.json")
+          index = json.loads(index_path.read_text(encoding="utf-8"))
+          catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
+          features = int(index.get("features", 0))
+          regions = index.get("regions", [])
+          if features <= 0 or not regions:
+              raise SystemExit("Index converti vide : catalogue inchangé.")
+
+          layer = catalog.setdefault("layers", {}).setdefault("neighborhoodBoundaries", {})
+          layer.update({
+              "url": "assets/neighborhood-boundaries-index.json",
+              "features": features,
+              "mappedFeatures": int(index.get("mappedFeatures", 0)),
+              "estimatedFeatures": int(index.get("estimatedFeatures", 0)),
+              "communesWithFeatures": int(index.get("communesWithFeatures", 0)),
+              "regions": len(regions),
+              "bytesCompressed": sum(int(region.get("bytesCompressed", 0)) for region in regions),
+              "loading": "zones régionales visibles uniquement, zoom 13+ lorsque les limites administratives sont activées",
+              "method": (
+                  f"{int(index.get('mappedFeatures', 0))} contours cartographiés et "
+                  f"{int(index.get('estimatedFeatures', 0))} secteurs estimatifs."
+              ),
+              "license": " ; ".join(index.get("licenses", ["ODbL 1.0"])),
+              "limitation": index.get(
+                  "limitations",
+                  "Les secteurs estimatifs ne sont pas des limites administratives officielles."
+              ),
+          })
+          catalog_path.write_text(
+              json.dumps(catalog, ensure_ascii=False, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          print(
+              f"Catalogue synchronisé : {features} secteurs, "
+              f"{layer['communesWithFeatures']} communes, {len(regions)} régions."
+          )
+          PY
+
+      - name: Validate converted index
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          index = json.loads(Path("assets/neighborhood-boundaries-index.json").read_text(encoding="utf-8"))
+          catalog = json.loads(Path("assets/data-catalog.json").read_text(encoding="utf-8"))
+          regions = index.get("regions", [])
+          total = sum(int(region.get("count", 0)) for region in regions)
+          if index.get("features", 0) < 1000 or total != index.get("features"):
+              raise SystemExit("Index régional incohérent ; aucune PR ne sera créée.")
+          if len(regions) < 4:
+              raise SystemExit(f"Couverture régionale insuffisante : {len(regions)} régions.")
+          if catalog["layers"]["neighborhoodBoundaries"]["features"] != index["features"]:
+              raise SystemExit("Catalogue et index ne correspondent pas.")
+          print(
+              f"Index cohérent : {index['features']} secteurs, "
+              f"{index.get('communesWithFeatures', 0)} communes, {len(regions)} régions."
+          )
+          PY
+
+      - name: Propose the validated data for review
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git add assets/neighborhood-boundaries/ assets/neighborhood-boundaries-index.json assets/data-catalog.json reports/
+          if git diff --cached --quiet; then
+            echo "Aucune différence : aucune pull request nécessaire."
+            exit 0
+          fi
+
+          BRANCH="data/neighborhoods-${GITHUB_RUN_ID}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git commit -m "data: actualiser les limites de quartiers multi-sources"
+          git push --set-upstream origin "$BRANCH"
+
+          gh pr create \
+            --base main \
+            --head "$BRANCH" \
+            --title "data: actualiser les limites de quartiers multi-sources" \
+            --body "## Résumé\n- Pipeline multi-sources exécuté avec les tests de régression.\n- La sortie a passé les contrôles de volume, géométrie et couverture.\n- Le catalogue est synchronisé avec l'index régional.\n\n**À vérifier avant fusion :** comparer le rapport `reports/neighborhood-coverage.md` et inspecter visuellement au moins Casablanca, Rabat, Marrakech, Fès, Tanger, Agadir, Oujda, Laâyoune, Béni Mellal et Errachidia. Les secteurs estimatifs ne sont pas des limites officielles."
