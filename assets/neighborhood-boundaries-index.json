@@ -1,23 +1,202 @@
 {
-  "version": "morocco-neighborhood-boundaries-2026-10-23-multi-source",
-  "generatedAt": "2026-10-23",
-  "regions": [],
-  "features": 0,
-  "mappedFeatures": 0,
-  "estimatedFeatures": 0,
-  "communesWithFeatures": 0,
+  "version": "morocco-neighborhood-boundaries-2026-10-21-v4",
+  "generatedAt": "2026-10-21",
+  "regions": [
+    {
+      "code": "01",
+      "url": "assets/neighborhood-boundaries/01.geojson.gz",
+      "bbox": [
+        -6.24311,
+        34.50488,
+        -3.80616,
+        35.91464
+      ],
+      "count": 592,
+      "mapped": 3,
+      "estimated": 589,
+      "communes": 146,
+      "bytesCompressed": 42413
+    },
+    {
+      "code": "02",
+      "url": "assets/neighborhood-boundaries/02.geojson.gz",
+      "bbox": [
+        -4.10792,
+        31.70933,
+        -1.2132,
+        35.44014
+      ],
+      "count": 590,
+      "mapped": 20,
+      "estimated": 570,
+      "communes": 124,
+      "bytesCompressed": 35486
+    },
+    {
+      "code": "03",
+      "url": "assets/neighborhood-boundaries/03.geojson.gz",
+      "bbox": [
+        -5.88311,
+        32.59947,
+        -2.89216,
+        34.89524
+      ],
+      "count": 876,
+      "mapped": 5,
+      "estimated": 871,
+      "communes": 194,
+      "bytesCompressed": 30341
+    },
+    {
+      "code": "04",
+      "url": "assets/neighborhood-boundaries/04.geojson.gz",
+      "bbox": [
+        -7.12249,
+        33.1618,
+        -5.31388,
+        35.01789
+      ],
+      "count": 474,
+      "mapped": 14,
+      "estimated": 460,
+      "communes": 113,
+      "bytesCompressed": 16124
+    },
+    {
+      "code": "05",
+      "url": "assets/neighborhood-boundaries/05.geojson.gz",
+      "bbox": [
+        -7.32114,
+        31.33899,
+        -5.24122,
+        33.48315
+      ],
+      "count": 560,
+      "mapped": 12,
+      "estimated": 548,
+      "communes": 135,
+      "bytesCompressed": 16802
+    },
+    {
+      "code": "06",
+      "url": "assets/neighborhood-boundaries/06.geojson.gz",
+      "bbox": [
+        -9.05922,
+        32.31927,
+        -6.80728,
+        33.83185
+      ],
+      "count": 1323,
+      "mapped": 12,
+      "estimated": 1311,
+      "communes": 153,
+      "bytesCompressed": 57249
+    },
+    {
+      "code": "07",
+      "url": "assets/neighborhood-boundaries/07.geojson.gz",
+      "bbox": [
+        -9.84188,
+        30.78595,
+        -7.00207,
+        32.81425
+      ],
+      "count": 1020,
+      "mapped": 9,
+      "estimated": 1011,
+      "communes": 251,
+      "bytesCompressed": 30935
+    },
+    {
+      "code": "08",
+      "url": "assets/neighborhood-boundaries/08.geojson.gz",
+      "bbox": [
+        -7.75238,
+        29.47659,
+        -3.11083,
+        33.09795
+      ],
+      "count": 551,
+      "mapped": 5,
+      "estimated": 546,
+      "communes": 125,
+      "bytesCompressed": 18773
+    },
+    {
+      "code": "09",
+      "url": "assets/neighborhood-boundaries/09.geojson.gz",
+      "bbox": [
+        -10.01009,
+        28.52772,
+        -6.35365,
+        31.16659
+      ],
+      "count": 824,
+      "mapped": 2,
+      "estimated": 822,
+      "communes": 175,
+      "bytesCompressed": 31187
+    },
+    {
+      "code": "10",
+      "url": "assets/neighborhood-boundaries/10.geojson.gz",
+      "bbox": [
+        -11.78196,
+        27.13613,
+        -8.6675,
+        29.63055
+      ],
+      "count": 239,
+      "mapped": 0,
+      "estimated": 239,
+      "communes": 53,
+      "bytesCompressed": 7587
+    },
+    {
+      "code": "11",
+      "url": "assets/neighborhood-boundaries/11.geojson.gz",
+      "bbox": [
+        -14.90491,
+        24.38006,
+        -8.66639,
+        28.21113
+      ],
+      "count": 97,
+      "mapped": 0,
+      "estimated": 97,
+      "communes": 20,
+      "bytesCompressed": 4748
+    },
+    {
+      "code": "12",
+      "url": "assets/neighborhood-boundaries/12.geojson.gz",
+      "bbox": [
+        -17.10463,
+        20.7699,
+        -12,
+        24.68323
+      ],
+      "count": 58,
+      "mapped": 0,
+      "estimated": 58,
+      "communes": 13,
+      "bytesCompressed": 1958
+    }
+  ],
+  "features": 7204,
+  "mappedFeatures": 82,
+  "estimatedFeatures": 7122,
+  "communesWithFeatures": 1502,
   "communesTotal": 1502,
-  "coverage": 0.0,
+  "coverage": 100,
   "sources": {
-    "mappedGeometry": "Polygones OpenStreetMap (place=neighbourhood/suburb/quarter)",
-    "estimatedGeometry": "Cellules Voronoi multi-sources (Overture + OSM + GeoNames + Poste Maroc)",
-    "gridGeometry": "Secteurs réguliers découpés par le contour communal",
+    "mappedGeometry": "Polygones OpenStreetMap (place=neighbourhood/suburb/quarter, limites administratives 9-11)",
+    "estimatedGeometry": "Cellules de Voronoi autour de points OpenStreetMap, decoupees par les contours communaux",
+    "gridGeometry": "Secteurs reguliers decoupes par le contour communal, nommes d apres les villages/douars OpenStreetMap ou par direction",
     "communeContext": "morocco-communes 1.10.0 (HCP RGPH 2024)"
   },
   "licenses": [
-    "ODbL 1.0",
-    "CC-BY 4.0"
+    "ODbL 1.0"
   ],
-  "limitations": "Les polygones mappés proviennent d'OpenStreetMap. Les estimations combinent 6 sources ouvertes (Overture, OSM, GeoNames, Poste Maroc, Kontur/HDX, HCP) avec un score de confiance. Ce tracé n'est pas une limite officielle.",
-  "pipeline": "prepare-neighborhood-boundaries-multi-source.py"
+  "limitations": "Les polygones mappes proviennent d OpenStreetMap. Les cellules Voronoi et les secteurs sont des decoupages indicatifs, pas des limites officielles : aucun jeu national officiel de limites de quartiers n est publie ouvertement."
 }
