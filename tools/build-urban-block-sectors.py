@@ -146,6 +146,44 @@ def reached_sector_cap(count: int, target_max: int) -> bool:
     return target_max > 0 and count >= target_max
 
 
+def sample_features_by_tile(features: list[dict], target_max: int,
+                            tile_property: str = "_samplingTile") -> list[dict]:
+    """Round-robin sample accepted sectors across all active road/building tiles."""
+    buckets: dict[tuple[int, int], list[dict]] = defaultdict(list)
+    for feature in features:
+        props = feature.get("properties") or {}
+        raw_key = str(props.get(tile_property) or "")
+        try:
+            key = tuple(int(value) for value in raw_key.split(":"))
+            if len(key) != 2:
+                continue
+        except (TypeError, ValueError):
+            continue
+        buckets[key].append(feature)
+
+    for values in buckets.values():
+        values.sort(key=lambda feature: str(feature.get("id") or ""))
+
+    tile_order = order_active_tiles(buckets.keys())
+    selected: list[dict] = []
+    depth = 0
+    unlimited = target_max == 0
+    while unlimited or len(selected) < target_max:
+        added_this_round = False
+        for key in tile_order:
+            values = buckets[key]
+            if depth >= len(values):
+                continue
+            selected.append(values[depth])
+            added_this_round = True
+            if not unlimited and len(selected) >= target_max:
+                break
+        if not added_this_round:
+            break
+        depth += 1
+    return selected
+
+
 def polygonize_urban_blocks(road_lines: list, building_points: list,
                             core_bounds: tuple[float, float, float, float],
                             min_buildings: int = MIN_BUILDINGS) -> list[tuple[Any, int]]:
@@ -389,13 +427,34 @@ def main() -> int:
                     "roadClasses": road_class_names,
                     "areaKm2": area,
                     "confidence": 0.78,
+                    "_samplingTile": f"{key[0]}:{key[1]}",
                 },
                 "geometry": mapping(clipped),
             })
-            if reached_sector_cap(len(output), args.target_max):
-                break
-        if reached_sector_cap(len(output), args.target_max):
-            break
+
+    candidate_count = len(output)
+    candidate_tile_count = len({
+        str((feature.get("properties") or {}).get("_samplingTile") or "")
+        for feature in output
+    })
+    output = sample_features_by_tile(output, args.target_max)
+    selected_tile_count = len({
+        str((feature.get("properties") or {}).get("_samplingTile") or "")
+        for feature in output
+    })
+
+    # Rename the sample consecutively within each commune after the spatial sample
+    # so user-facing labels do not contain gaps from rejected/unselected candidates.
+    selected_per_commune = Counter()
+    for feature in output:
+        props = feature["properties"]
+        code = str(props.get("commune_id") or "")
+        selected_per_commune[code] += 1
+        name = f"Îlot urbain estimé {selected_per_commune[code]:04d}"
+        props["name"] = name
+        props["name_fr"] = name
+
+    per_commune = selected_per_commune
 
     report = [
         "# Urban block sector generation",
@@ -407,11 +466,14 @@ def main() -> int:
         f"- Road segments loaded: {road_count}",
         f"- Building footprints loaded: {building_count_total}",
         f"- Active building tiles: {len(active_tiles)}",
-        f"- Candidate sectors: {len(output)}",
+        f"- Candidate sectors before sampling: {candidate_count}",
+        f"- Selected sectors after spatial sampling: {len(output)}",
         f"- Target minimum: {args.target_min}",
         f"- Target maximum: {args.target_max or 'unlimited'}",
-        f"- Deterministic tile order: SHA1 sample across active building tiles",
-        f"- Communes represented: {len(per_commune)}",
+        f"- Active tiles with candidates: {candidate_tile_count}",
+        f"- Tiles represented in the sample: {selected_tile_count}",
+        f"- Sampling: deterministic round-robin across tile buckets, tile order hashed by SHA1, candidates ordered by stable feature ID",
+        f"- Communes represented after sampling: {len(per_commune)}",
         f"- Road class counts: {dict(road_class_counts)}",
         "",
         "## Highest coverage communes",
