@@ -208,9 +208,11 @@ jobs:
         run: |
           set -euo pipefail
           PBF_URL="https://download.geofabrik.de/africa/morocco-latest.osm.pbf"
-          curl -fL --retry 3 --retry-delay 5 "$PBF_URL" -o /tmp/morocco-latest.osm.pbf
-          curl -fL --retry 3 --retry-delay 3 "$PBF_URL.md5" -o /tmp/morocco-latest.osm.pbf.md5
+          EFFECTIVE_PBF_URL="$(curl -fL --retry 3 --retry-delay 5 -o /tmp/morocco-latest.osm.pbf -w '%{url_effective}' "$PBF_URL")"
+          echo "Resolved OSM snapshot: $EFFECTIVE_PBF_URL"
+          curl -fL --retry 3 --retry-delay 3 "$EFFECTIVE_PBF_URL.md5" -o /tmp/morocco-latest.osm.pbf.md5
           EXPECTED="$(awk '{print $1}' /tmp/morocco-latest.osm.pbf.md5 | head -n 1)"
+          test -n "$EXPECTED"
           echo "$EXPECTED  /tmp/morocco-latest.osm.pbf" | md5sum -c -
 
           osmium tags-filter /tmp/morocco-latest.osm.pbf \
