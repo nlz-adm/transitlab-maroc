@@ -568,7 +568,14 @@ def estimate_boundaries(commune_geom: Any, seeds: List[Seed]) -> List[Any]:
         return [clipped] if not clipped.is_empty else []
     try:
         mp = MultiPoint(points)
-        polys = voronoi_polygons(mp, envelope=commune_geom)
+        try:
+            # Shapely >= 2.0 utilise `extend_to`; le fallback garde la compatibilité
+            # avec les anciennes versions qui exposent `envelope`.
+            polys = voronoi_polygons(mp, extend_to=commune_geom)
+        except TypeError as exc:
+            if "extend_to" not in str(exc):
+                raise
+            polys = voronoi_polygons(mp, envelope=commune_geom)
         # polys peut etre une collection
         if hasattr(polys, "geoms"):
             cells = list(polys.geoms)
@@ -776,6 +783,11 @@ def main() -> int:
                 "geometry": mapping(poly),
             })
             stats["by_region"][region]["quartiers"] += 1
+
+    # Refuser une sortie vide avant d'écraser un éventuel fichier précédent.
+    if not features:
+        print("ERREUR: aucune géométrie de quartier produite. Sortie précédente conservée.", file=sys.stderr)
+        return 2
 
     # Refuser une sortie vide avant d'écraser un éventuel fichier précédent.
     if not features:
