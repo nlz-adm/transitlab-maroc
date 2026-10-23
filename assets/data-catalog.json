@@ -43,26 +43,20 @@
     },
     "neighborhoodBoundaries": {
       "url": "assets/neighborhood-boundaries-index.json",
-      "features": 668,
-      "mappedFeatures": 160,
-      "estimatedFeatures": 508,
-      "communesWithFeatures": 51,
-      "regions": 9,
-      "bytesCompressed": 148448,
-      "postalCrossChecks": 146,
+      "features": 7204,
+      "mappedFeatures": 82,
+      "estimatedFeatures": 7122,
+      "communesWithFeatures": 1502,
+      "regions": 12,
+      "bytesCompressed": 293603,
       "loading": "zones régionales visibles uniquement, zoom 13+ lorsque les limites administratives sont activées",
       "geometrySources": [
-        "OpenStreetMap via Overture Maps divisions, contours quartiers tracés et points géolocalisés"
+        "Contours cartographiés OpenStreetMap (place=neighbourhood/suburb/quarter)",
+        "Secteurs indicatifs estimés à partir de lieux habités OpenStreetMap et des contours communaux"
       ],
-      "supportingSources": [
-        "HCP RGPH 2024 pour les codes et types communaux",
-        "Kontur Population / HDX · mailles H3 multi-sources pour limiter les secteurs résidentiels estimés",
-        "Poste Maroc · noms et codes postaux 2018 pour les correspondances exactes"
-      ],
-      "method": "Contours cartographiés découpés aux communes urbaines; secteurs indicatifs de Voronoï calculés autour de quartiers nommés, limités aux communes urbaines et aux mailles résidentielles multi-sources.",
-      "license": "ODbL 1.0 pour les données OSM et Poste Maroc; CC BY 4.0 pour les mailles Kontur/HDX.",
-      "limitation": "Couverture partielle; aucun jeu national ouvert de limites officielles des quartiers trouvé dans les sources recensées. Les pointillés sont indicatifs, pas des limites administratives. Les codes postaux ne contiennent aucune géométrie.",
-      "indexBytes": 4043
+      "method": "82 contours cartographiés et 7 122 secteurs estimatifs (Voronoï ou découpages communaux) répartis dans 1 502 communes.",
+      "license": "ODbL 1.0",
+      "limitation": "Les secteurs estimatifs ne sont pas des limites officielles. Ce jeu est un fond de travail exploratoire temporaire, en attendant la validation des résultats du pipeline multi-sources."
     },
     "basemap": {
       "url": "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
@@ -83,7 +77,7 @@
     },
     "populationNeighborhoods": {
       "url": "assets/population-neighborhoods-index.json",
-      "bytesCompressed": 4245460.0,
+      "bytesCompressed": 4245460,
       "features": 104980,
       "chunks": 282,
       "resolution": "H3 resolution 8 · maille indicative d’environ 400 m",
