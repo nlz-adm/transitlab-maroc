@@ -1,5 +1,5 @@
 {
-  "version": "maroc-v23-20261023",
+  "version": "maroc-v24-20261023",
   "generatedAt": "2026-10-21T08:25:58Z",
   "strategy": "native-esm-lazy-map",
   "layers": {
@@ -49,7 +49,7 @@
       "communesWithFeatures": 1502,
       "regions": 12,
       "bytesCompressed": 293603,
-      "loading": "zones régionales visibles uniquement, zoom 11+ lorsque les limites administratives sont activées",
+      "loading": "polygones de quartier seuls à partir du zoom 11 lorsque la densité est activée; limites visibles au zoom 11+",
       "geometrySources": [
         "Contours cartographiés OpenStreetMap (place=neighbourhood/suburb/quarter)",
         "Secteurs indicatifs estimés à partir de lieux habités OpenStreetMap et des contours communaux"
