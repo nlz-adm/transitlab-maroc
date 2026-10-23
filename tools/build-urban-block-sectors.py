@@ -133,6 +133,19 @@ def clip_roads_to_working_bounds(road_lines: list, bounds: tuple[float, float, f
     return clipped_lines
 
 
+def order_active_tiles(keys: Iterable[tuple[int, int]]) -> list[tuple[int, int]]:
+    """Use a stable hash order so a 10k cap samples dense tiles across all Morocco."""
+    return sorted(
+        keys,
+        key=lambda key: hashlib.sha1(f"{key[0]}:{key[1]}".encode("ascii")).digest(),
+    )
+
+
+def reached_sector_cap(count: int, target_max: int) -> bool:
+    """A zero cap means unlimited; otherwise stop exactly at the requested target."""
+    return target_max > 0 and count >= target_max
+
+
 def polygonize_urban_blocks(road_lines: list, building_points: list,
                             core_bounds: tuple[float, float, float, float],
                             min_buildings: int = MIN_BUILDINGS) -> list[tuple[Any, int]]:
@@ -244,10 +257,14 @@ def main() -> int:
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--report", required=True, type=Path)
     parser.add_argument("--target-min", type=int, default=10000)
+    parser.add_argument("--target-max", type=int, default=10000,
+                        help="Maximum number of sectors to emit; 0 disables the cap")
     parser.add_argument("--tile-size", type=float, default=TILE_DEGREES)
     parser.add_argument("--min-buildings", type=int, default=MIN_BUILDINGS)
     args = parser.parse_args()
     TILE_DEGREES = args.tile_size
+    if args.target_max < 0 or (args.target_max and args.target_max < args.target_min):
+        raise SystemExit("--target-max must be 0 (unlimited) or greater than/equal to --target-min.")
 
     if not args.roads.is_file() or not args.buildings.is_file():
         raise SystemExit("Missing roads/buildings extract; refusing to create synthetic fallback geometry.")
@@ -304,8 +321,10 @@ def main() -> int:
         building_tiles[tile_key(point.x, point.y)].append((point.x, point.y))
         building_count_total += 1
 
-    active_tiles = sorted(key for key, points in building_tiles.items()
-                          if len(points) >= max(8, args.min_buildings * 4))
+    active_tiles = order_active_tiles(
+        key for key, points in building_tiles.items()
+        if len(points) >= max(8, args.min_buildings * 4)
+    )
     if not active_tiles:
         raise SystemExit("No building-active tiles; refusing to publish empty urban sectors.")
 
@@ -373,6 +392,10 @@ def main() -> int:
                 },
                 "geometry": mapping(clipped),
             })
+            if reached_sector_cap(len(output), args.target_max):
+                break
+        if reached_sector_cap(len(output), args.target_max):
+            break
 
     report = [
         "# Urban block sector generation",
@@ -386,6 +409,8 @@ def main() -> int:
         f"- Active building tiles: {len(active_tiles)}",
         f"- Candidate sectors: {len(output)}",
         f"- Target minimum: {args.target_min}",
+        f"- Target maximum: {args.target_max or 'unlimited'}",
+        f"- Deterministic tile order: SHA1 sample across active building tiles",
         f"- Communes represented: {len(per_commune)}",
         f"- Road class counts: {dict(road_class_counts)}",
         "",
@@ -408,7 +433,7 @@ def main() -> int:
         json.dumps({"type": "FeatureCollection", "features": output}, ensure_ascii=False),
         encoding="utf-8",
     )
-    print(f"Urban sectors accepted: {len(output)} (target >= {args.target_min}); "
+    print(f"Urban sectors accepted: {len(output)} (target {args.target_min}..{args.target_max or 'unlimited'}); "
           f"{len(per_commune)} communes; {road_count} road segments; {building_count_total} building footprints.")
     return 0
 

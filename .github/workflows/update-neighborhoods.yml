@@ -223,7 +223,8 @@ jobs:
             --buildings /tmp/morocco-buildings.geojsonseq \
             --output assets/data/urban-block-sectors.geojson \
             --report reports/urban-block-coverage.md \
-            --target-min 10000
+            --target-min 10000 \
+            --target-max 10000
 
       - name: Convert validated data to site format
         run: |

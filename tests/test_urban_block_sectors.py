@@ -82,6 +82,19 @@ class UrbanBlockPolygonizationTests(unittest.TestCase):
         self.assertTrue(all(-0.1000001 <= line.bounds[1] <= 0.1000001 for line in clipped))
         self.assertTrue(all(-0.1000001 <= line.bounds[3] <= 0.1000001 for line in clipped))
 
+    def test_active_tile_order_is_stable_and_not_longitude_sorted(self):
+        keys = [(x, y) for x in range(8) for y in range(6)]
+        ordered = self.builder.order_active_tiles(keys)
+        self.assertEqual(ordered, self.builder.order_active_tiles(reversed(keys)))
+        self.assertEqual(set(ordered), set(keys))
+        self.assertNotEqual(ordered, sorted(keys))
+
+    def test_sector_cap_stops_exactly_at_target_but_zero_is_unlimited(self):
+        self.assertFalse(self.builder.reached_sector_cap(9999, 10000))
+        self.assertTrue(self.builder.reached_sector_cap(10000, 10000))
+        self.assertTrue(self.builder.reached_sector_cap(10001, 10000))
+        self.assertFalse(self.builder.reached_sector_cap(10001, 0))
+
     def test_geojson_sequence_reader_handles_record_separators(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "records.geojsonseq"
