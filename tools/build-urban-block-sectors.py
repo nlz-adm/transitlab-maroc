@@ -15,7 +15,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any, Iterable
 
-from shapely.geometry import LineString, Point, MultiPolygon, GeometryCollection, shape, mapping
+from shapely.geometry import LineString, Point, MultiPolygon, GeometryCollection, shape, mapping, box
 from shapely.ops import polygonize, unary_union
 from shapely.strtree import STRtree
 from shapely.validation import make_valid
@@ -103,6 +103,34 @@ def polygonal(geometry):
         if result.geom_type in {"Polygon", "MultiPolygon"} and not result.is_empty:
             return result
     return None
+
+
+def linear_parts(geometry) -> list:
+    """Return only non-empty line strings from a clipped road geometry."""
+    if geometry is None or geometry.is_empty:
+        return []
+    if geometry.geom_type == "LineString":
+        return [geometry] if geometry.length > 1e-10 else []
+    if geometry.geom_type in {"MultiLineString", "GeometryCollection"}:
+        output = []
+        for part in geometry.geoms:
+            output.extend(linear_parts(part))
+        return output
+    return []
+
+
+def clip_roads_to_working_bounds(road_lines: list, bounds: tuple[float, float, float, float]) -> list:
+    """Restrict linework to a small halo around one tile before expensive noding/polygonizing."""
+    window = box(*bounds)
+    clipped_lines = []
+    for line in road_lines:
+        if not line.envelope.intersects(window):
+            continue
+        try:
+            clipped_lines.extend(linear_parts(line.intersection(window)))
+        except Exception:
+            continue
+    return clipped_lines
 
 
 def polygonize_urban_blocks(road_lines: list, building_points: list,
@@ -286,12 +314,25 @@ def main() -> int:
     per_commune = Counter()
     road_class_names = sorted(road_class_counts.keys())
     for tile_number, key in enumerate(active_tiles, 1):
+        core = tile_bounds(key)
+        middle_lat = (core[1] + core[3]) / 2
+        # An urban block is capped at 1.25 km across, so a 1.5 km halo is
+        # enough to close blocks crossing the tile border without noding a 40 km
+        # neighbourhood on every tile.
+        margin_lon = 1.5 / (111.32 * max(0.15, math.cos(math.radians(middle_lat)))) + 0.001
+        margin_lat = 1.5 / 110.574 + 0.001
+        working = (core[0] - margin_lon, core[1] - margin_lat,
+                   core[2] + margin_lon, core[3] + margin_lat)
         local_keys = list(neighboring_tiles(key))
-        road_lines = [line for k in local_keys for line in road_tiles.get(k, [])]
-        local_building_coords = [point for k in local_keys for point in building_tiles.get(k, [])]
+        raw_road_lines = [line for k in local_keys for line in road_tiles.get(k, [])]
+        road_lines = clip_roads_to_working_bounds(raw_road_lines, working)
+        wx0, wy0, wx1, wy1 = working
+        local_building_coords = [
+            point for k in local_keys for point in building_tiles.get(k, [])
+            if wx0 <= point[0] <= wx1 and wy0 <= point[1] <= wy1
+        ]
         if len(road_lines) < 12 or len(local_building_coords) < args.min_buildings:
             continue
-        core = tile_bounds(key)
         for poly, n_buildings in polygonize_urban_blocks(
             road_lines, local_building_coords, core, args.min_buildings
         ):
