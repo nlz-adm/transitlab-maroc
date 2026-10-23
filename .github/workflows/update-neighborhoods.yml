@@ -2,6 +2,10 @@ name: Update Neighborhood Boundaries
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "tools/prepare-neighborhood-boundaries-multi-source.py"
 
 permissions:
   contents: write
@@ -107,8 +111,17 @@ jobs:
               f for f in features
               if (f.get("geometry") or {}).get("type") in {"Polygon", "MultiPolygon"}
           ]
+          mapped_features = [
+              f for f in features
+              if not (f.get("properties") or {}).get("estimated", True)
+          ]
 
-          print(f"Sortie pipeline : {len(features)} secteurs ; {len(communes)} communes")
+          print(f"Sortie pipeline : {len(features)} secteurs ; {len(communes)} communes ; {len(mapped_features)} contours cartographiés")
+          if len(mapped_features) < 30:
+              raise SystemExit(
+                  f"Sortie refusée : seulement {len(mapped_features)} vrais contours cartographiés. "
+                  "La version publiée est conservée."
+              )
           print(f"Seuil de publication : {minimum} secteurs et 300 communes minimum")
           if len(features) < minimum:
               raise SystemExit(

@@ -391,6 +391,8 @@ area["ISO3166-1"="MA"][admin_level=2]->.ma;
   node(area.ma)["place"~"^({OSM_PLACE_TAGS})$"];
   way(area.ma)["place"~"^(quarter|suburb|neighbourhood)$"];
   relation(area.ma)["place"~"^(quarter|suburb|neighbourhood)$"];
+  way(area.ma)["boundary"="place"]["name"];
+  relation(area.ma)["boundary"="place"]["name"];
 );
 out body geom;
 """

@@ -23,6 +23,59 @@ def load_pipeline_module():
 
 
 class NeighborhoodPipelineTests(unittest.TestCase):
+    def test_overpass_closed_way_keeps_its_actual_neighborhood_polygon(self):
+        module = load_pipeline_module()
+        element = {
+            "type": "way",
+            "id": 10,
+            "tags": {"name": "Quartier test", "place": "neighbourhood"},
+            "geometry": [
+                {"lon": -9.1, "lat": 32.3},
+                {"lon": -9.0, "lat": 32.3},
+                {"lon": -9.0, "lat": 32.4},
+                {"lon": -9.1, "lat": 32.4},
+                {"lon": -9.1, "lat": 32.3},
+            ],
+        }
+        seed = module.osm_element_to_seed(element)
+        self.assertIsNotNone(seed)
+        self.assertEqual(seed.kind, "polygon")
+        self.assertIsNotNone(seed.polygon)
+        self.assertGreater(seed.polygon.area, 0)
+        self.assertAlmostEqual(seed.polygon.bounds[0], -9.1, places=5)
+        self.assertAlmostEqual(seed.polygon.bounds[2], -9.0, places=5)
+
+    def test_overpass_relation_stitches_outer_way_members_into_polygon(self):
+        module = load_pipeline_module()
+        a = {"lon": -9.1, "lat": 32.3}
+        b = {"lon": -9.0, "lat": 32.3}
+        c = {"lon": -9.0, "lat": 32.4}
+        d = {"lon": -9.1, "lat": 32.4}
+        element = {
+            "type": "relation",
+            "id": 20,
+            "tags": {"name": "Quartier relation", "place": "quarter"},
+            "members": [
+                {"type": "way", "role": "outer", "geometry": [a, b, c]},
+                {"type": "way", "role": "outer", "geometry": [c, d, a]},
+            ],
+        }
+        seed = module.osm_element_to_seed(element)
+        self.assertIsNotNone(seed)
+        self.assertEqual(seed.kind, "polygon")
+        self.assertIsNotNone(seed.polygon)
+        self.assertGreater(seed.polygon.area, 0)
+
+    def test_merge_keeps_polygon_boundary_when_name_matches_point(self):
+        module = load_pipeline_module()
+        point_seed = module.Seed(name="Quartier test", lon=-9.05, lat=32.35, source="geonames", population=500)
+        polygon_seed = module.Seed(name="Quartier test", lon=-9.05, lat=32.35, source="osm_overpass",
+                                   kind="polygon", polygon=box(-9.1, 32.3, -9.0, 32.4))
+        merged = module.merge_seeds([point_seed, polygon_seed])
+        self.assertEqual(len(merged), 1)
+        self.assertIsNotNone(merged[0].polygon)
+        self.assertEqual(merged[0].source, "osm_overpass")
+
     def test_voronoi_estimation_uses_shapely_2_extend_to_api(self):
         module = load_pipeline_module()
         commune = box(0, 0, 10, 10)
@@ -127,9 +180,9 @@ class PublishedDataIntegrityTests(unittest.TestCase):
         self.assertIn("if(zoom>=NEIGHBORHOOD_BOUNDARY_MIN_ZOOM){removePopulationRegionLayers();setPopulationArrondissementLayer([]);await updatePopulationNeighborhoodLayer(refreshId,zoom,bounds);", app)
         self.assertIn("raw=feature.properties?.densityEstimate", app)
         self.assertIn("color:estimated?'#754619':'#2d342f'", app)
-        self.assertIn("populationNeighborhoodLayers.size===0", app)
+        self.assertIn("Pas de limite de quartier cartographiée dans cette zone", app)
         self.assertIn("function isPlausibleNeighborhoodGeometry(feature)", app)
-        self.assertIn("widthKm>8&&heightKm>8&&bboxAreaKm2>80", app)
+        self.assertIn("return feature?.properties?.boundaryKind==='mapped'", app)
         self.assertIn("visibleNeighborhoodFeatures(await loadNeighborhoodRegion(region.code),bounds)", app)
         self.assertIn("boundaryFeatureBbox(feature)", app)
         self.assertIn("neighborhoodHaloPane", app)

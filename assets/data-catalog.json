@@ -1,5 +1,5 @@
 {
-  "version": "maroc-v25-20261023",
+  "version": "maroc-v26-20261023",
   "generatedAt": "2026-10-21T08:25:58Z",
   "strategy": "native-esm-lazy-map",
   "layers": {
@@ -49,7 +49,7 @@
       "communesWithFeatures": 1502,
       "regions": 12,
       "bytesCompressed": 293603,
-      "loading": "À partir du zoom 11, le mode densité affiche les polygones de quartiers ; les estimations géographiques trop vastes et régulières sont filtrées, et les zones sans contour exploitable restent sans limite affichée.",
+      "loading": "Uniquement les contours de quartiers cartographiés sont dessinés au zoom 11+ ; les secteurs Voronoï estimés sont masqués afin de ne pas être confondus avec de vrais quartiers.",
       "geometrySources": [
         "Contours cartographiés OpenStreetMap (place=neighbourhood/suburb/quarter)",
         "Secteurs indicatifs estimés à partir de lieux habités OpenStreetMap et des contours communaux"
