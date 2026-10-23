@@ -107,7 +107,7 @@ class PublishedDataIntegrityTests(unittest.TestCase):
         catalog = json.loads((ROOT / "assets" / "data-catalog.json").read_text(encoding="utf-8"))
         expected = catalog["version"]
 
-        self.assertRegex(expected, r"^maroc-v\\d+-\\d{8}$")
+        self.assertRegex(expected, r"^maroc-v\d+-\d{8}$")
         self.assertIn(expected, html)
         self.assertIn(expected, boot)
         self.assertIn(expected, app)
