@@ -1,5 +1,5 @@
 {
-  "version": "maroc-v26-20261023",
+  "version": "maroc-v27-20261023",
   "generatedAt": "2026-10-21T08:25:58Z",
   "strategy": "native-esm-lazy-map",
   "layers": {
@@ -43,20 +43,20 @@
     },
     "neighborhoodBoundaries": {
       "url": "assets/neighborhood-boundaries-index.json",
-      "features": 7204,
-      "mappedFeatures": 82,
-      "estimatedFeatures": 7122,
-      "communesWithFeatures": 1502,
-      "regions": 12,
-      "bytesCompressed": 293603,
-      "loading": "Uniquement les contours de quartiers cartographiés sont dessinés au zoom 11+ ; les secteurs Voronoï estimés sont masqués afin de ne pas être confondus avec de vrais quartiers.",
+      "features": 83,
+      "mappedFeatures": 83,
+      "estimatedFeatures": 0,
+      "communesWithFeatures": 33,
+      "regions": 9,
+      "bytesCompressed": 20541,
+      "loading": "Contours de quartiers cartographiés uniquement, chargés à partir du zoom 11+ ; les cellules estimées sont exclues.",
       "geometrySources": [
         "Contours cartographiés OpenStreetMap (place=neighbourhood/suburb/quarter)",
         "Secteurs indicatifs estimés à partir de lieux habités OpenStreetMap et des contours communaux"
       ],
-      "method": "82 contours cartographiés et 7 122 secteurs estimatifs (Voronoï ou découpages communaux) répartis dans 1 502 communes.",
-      "license": "ODbL 1.0",
-      "limitation": "Les secteurs estimatifs ne sont pas des limites officielles. Ce jeu est un fond de travail exploratoire temporaire, en attendant la validation des résultats du pipeline multi-sources."
+      "method": "83 polygones cartographiés avec géométrie source conservée.",
+      "license": "ODbL 1.0 ; CC-BY 4.0",
+      "limitation": "La couverture varie selon la ville ; aucune cellule Voronoï estimative n’est publiée comme quartier."
     },
     "basemap": {
       "url": "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
