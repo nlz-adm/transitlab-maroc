@@ -226,6 +226,69 @@ class PublishedDataIntegrityTests(unittest.TestCase):
                 data = json.load(stream)
             self.assertEqual(data["features"][0]["properties"]["boundaryKind"], "mapped")
 
+    def test_converter_adds_only_road_bounded_sectors_as_estimated_blocks(self):
+        import gzip
+
+        with tempfile.TemporaryDirectory() as tmp:
+            directory = Path(tmp)
+            source = directory / "input.geojson"
+            blocks_path = directory / "urban-blocks.geojson"
+            output_dir = directory / "regions"
+            index_path = directory / "index.json"
+            polygon = {
+                "type": "Polygon",
+                "coordinates": [[[-9.1, 32.3], [-9.099, 32.3], [-9.099, 32.301],
+                                 [-9.1, 32.301], [-9.1, 32.3]]],
+            }
+            source.write_text(json.dumps({
+                "type": "FeatureCollection",
+                "features": [
+                    {"type": "Feature", "properties": {
+                        "name": "Contour réel", "commune_id": "MA01101",
+                        "region": "Marrakech-Safi", "source": "osm_overpass", "estimated": False,
+                    }, "geometry": polygon},
+                    {"type": "Feature", "properties": {
+                        "name": "Cellule Voronoï", "commune_id": "MA01101",
+                        "source": "geonames", "estimated": True,
+                    }, "geometry": polygon},
+                ],
+            }), encoding="utf-8")
+            blocks_path.write_text(json.dumps({
+                "type": "FeatureCollection",
+                "features": [
+                    {"type": "Feature", "properties": {
+                        "name": "Îlot urbain estimé 0001", "commune_id": "MA01101",
+                        "commune_name": "Safi", "region": "Marrakech-Safi",
+                        "source": "osm_road_block", "estimated": True, "boundaryKind": "urban_block",
+                        "buildingCount": 12, "estimationMethod": "road polygonization",
+                    }, "geometry": polygon},
+                ],
+            }), encoding="utf-8")
+
+            result = subprocess.run([
+                sys.executable, str(CONVERTER_PATH),
+                "--input", str(source),
+                "--output-dir", str(output_dir),
+                "--index", str(index_path),
+                "--mapped-only",
+                "--urban-blocks", str(blocks_path),
+                "--min-urban-blocks", "1",
+            ], capture_output=True, text=True, check=False)
+
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            index = json.loads(index_path.read_text(encoding="utf-8"))
+            self.assertEqual(index["features"], 2)
+            self.assertEqual(index["mappedFeatures"], 1)
+            self.assertEqual(index["urbanBlockFeatures"], 1)
+            self.assertEqual(index["estimatedFeatures"], 0)
+            with gzip.open(output_dir / "07.geojson.gz", "rt", encoding="utf-8") as stream:
+                data = json.load(stream)
+            kinds = {feature["properties"]["boundaryKind"] for feature in data["features"]}
+            self.assertEqual(kinds, {"mapped", "urban_block"})
+            block = next(feature for feature in data["features"] if feature["properties"]["boundaryKind"] == "urban_block")
+            self.assertEqual(block["properties"]["level"], "Secteur urbain estimé (îlot borné par les rues)")
+            self.assertEqual(block["properties"]["buildingCount"], 12)
+
     def test_neighborhood_index_matches_catalog_and_compressed_regions(self):
         import gzip
 
@@ -256,11 +319,17 @@ class PublishedDataIntegrityTests(unittest.TestCase):
                 self.assertEqual(geojson.get("type"), "FeatureCollection")
                 self.assertEqual(len(geojson.get("features", [])), region["count"])
                 self.assertTrue(geojson.get("features"), "Une région publiée ne doit pas être vide.")
-                if index.get("estimatedFeatures", 0) == 0:
+                if index.get("urbanBlockFeatures", 0) > 0:
+                    self.assertEqual(
+                        sum(1 for feature in geojson["features"]
+                            if (feature.get("properties") or {}).get("boundaryKind") == "urban_block"),
+                        region.get("urbanBlocks", 0),
+                    )
+                if index.get("estimatedFeatures", 0) == 0 and index.get("urbanBlockFeatures", 0) == 0:
                     self.assertTrue(
                         all((feature.get("properties") or {}).get("boundaryKind") == "mapped"
                             for feature in geojson["features"]),
-                        "Un index mapped-only ne doit pas publier de cellules estimatives."
+                        "Sans îlots urbains listés, la couche ne doit contenir que les contours cartographiés."
                     )
 
     def test_frontend_cache_busting_versions_are_synchronized(self):
@@ -292,10 +361,11 @@ class PublishedDataIntegrityTests(unittest.TestCase):
         self.assertIn("estimateDensityFromNearbyCells(center,cells,{maxDistanceKm:1.5,maxNeighbors:3})", app)
         self.assertIn("if(zoom>=NEIGHBORHOOD_BOUNDARY_MIN_ZOOM){removePopulationRegionLayers();setPopulationArrondissementLayer([]);await updatePopulationNeighborhoodLayer(refreshId,zoom,bounds);", app)
         self.assertIn("raw=feature.properties?.densityEstimate", app)
-        self.assertIn("color:estimated?'#754619':'#2d342f'", app)
+        self.assertIn("urbanBlock?'#71808e'", app)
+        self.assertIn("return kind==='mapped'||kind==='urban_block'", app)
         self.assertIn("Pas de limite de quartier cartographiée dans cette zone", app)
         self.assertIn("function isPlausibleNeighborhoodGeometry(feature)", app)
-        self.assertIn("return feature?.properties?.boundaryKind==='mapped'", app)
+        self.assertIn("return kind==='mapped'||kind==='urban_block'", app)
         self.assertIn("visibleNeighborhoodFeatures(await loadNeighborhoodRegion(region.code),bounds)", app)
         self.assertIn("boundaryFeatureBbox(feature)", app)
         self.assertIn("neighborhoodHaloPane", app)

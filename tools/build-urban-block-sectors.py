@@ -1,0 +1,376 @@
+#!/usr/bin/env python3
+"""Build street-bounded urban blocks from OSM roads, retaining source and uncertainty.
+
+The output is explicitly an estimated urban-block layer, not a layer of official
+neighbourhood boundaries. It only keeps enclosed road polygons with mapped
+building-footprint evidence, clipped to a Moroccan commune.
+"""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import math
+from collections import Counter, defaultdict
+from pathlib import Path
+from typing import Any, Iterable
+
+from shapely.geometry import LineString, Point, MultiPolygon, GeometryCollection, shape, mapping
+from shapely.ops import polygonize, unary_union
+from shapely.strtree import STRtree
+from shapely.validation import make_valid
+
+TILE_DEGREES = 0.12
+ROAD_CLASSES = {
+    "primary", "secondary", "tertiary", "unclassified",
+    "residential", "living_street", "service", "pedestrian", "road",
+}
+MIN_AREA_KM2 = 0.00015
+MAX_AREA_KM2 = 0.12
+MAX_SIDE_KM = 1.25
+MIN_BUILDINGS = 2
+
+
+def read_geojson_seq(path: Path) -> Iterable[dict]:
+    """Stream RFC 8142 GeoJSON Text Sequence without loading the country extract in memory."""
+    with path.open("r", encoding="utf-8") as stream:
+        for line_number, line in enumerate(stream, 1):
+            line = line.strip().lstrip("\x1e").strip()
+            if not line:
+                continue
+            try:
+                feature = json.loads(line)
+            except json.JSONDecodeError as exc:
+                raise ValueError(f"Invalid GeoJSONSeq record at {path}:{line_number}: {exc}") from exc
+            if isinstance(feature, dict) and feature.get("type") == "Feature":
+                yield feature
+
+
+def tile_key(lon: float, lat: float) -> tuple[int, int]:
+    return (math.floor((lon + 180.0) / TILE_DEGREES),
+            math.floor((lat + 90.0) / TILE_DEGREES))
+
+
+def neighboring_tiles(key: tuple[int, int]) -> Iterable[tuple[int, int]]:
+    for dx in (-1, 0, 1):
+        for dy in (-1, 0, 1):
+            yield key[0] + dx, key[1] + dy
+
+
+def tile_bounds(key: tuple[int, int]):
+    x0 = key[0] * TILE_DEGREES - 180.0
+    y0 = key[1] * TILE_DEGREES - 90.0
+    return x0, y0, x0 + TILE_DEGREES, y0 + TILE_DEGREES
+
+
+def km_dimensions(geometry) -> tuple[float, float, float]:
+    minx, miny, maxx, maxy = geometry.bounds
+    mid_lat = (miny + maxy) / 2
+    km_lon = 111.32 * max(0.15, math.cos(math.radians(mid_lat)))
+    width = (maxx - minx) * km_lon
+    height = (maxy - miny) * 110.574
+    return width, height, width * height
+
+
+def geometry_area_km2(geometry) -> float:
+    degree_area = max(0.0, float(geometry.area))
+    minx, miny, maxx, maxy = geometry.bounds
+    mid_lat = (miny + maxy) / 2
+    return degree_area * 111.32 * max(0.15, math.cos(math.radians(mid_lat))) * 110.574
+
+
+def polygonal(geometry):
+    if geometry is None or geometry.is_empty:
+        return None
+    geometry = make_valid(geometry)
+    if geometry.geom_type == "Polygon":
+        return geometry if geometry.area > 0 else None
+    if geometry.geom_type == "MultiPolygon":
+        parts = [p for p in geometry.geoms if not p.is_empty and p.area > 0]
+        if not parts:
+            return None
+        return MultiPolygon(parts) if len(parts) > 1 else parts[0]
+    if geometry.geom_type == "GeometryCollection":
+        parts = []
+        for part in geometry.geoms:
+            candidate = polygonal(part)
+            if candidate is None:
+                continue
+            parts.extend(list(candidate.geoms) if candidate.geom_type == "MultiPolygon" else [candidate])
+        if not parts:
+            return None
+        result = make_valid(unary_union(parts))
+        if result.geom_type in {"Polygon", "MultiPolygon"} and not result.is_empty:
+            return result
+    return None
+
+
+def polygonize_urban_blocks(road_lines: list, building_points: list,
+                            core_bounds: tuple[float, float, float, float],
+                            min_buildings: int = MIN_BUILDINGS) -> list[tuple[Any, int]]:
+    """Polygonize an actual local street graph; keep enclosed blocks with building evidence."""
+    if len(road_lines) < 4 or len(building_points) < min_buildings:
+        return []
+    try:
+        noded = unary_union(road_lines)
+        candidates = list(polygonize(noded))
+    except Exception:
+        return []
+
+    points = [p if isinstance(p, Point) else Point(p) for p in building_points]
+    tree = STRtree(points) if points else None
+    x0, y0, x1, y1 = core_bounds
+    output = []
+    for raw in candidates:
+        poly = polygonal(raw)
+        if poly is None:
+            continue
+        centre = poly.representative_point()
+        if not (x0 <= centre.x < x1 and y0 <= centre.y < y1):
+            continue
+        area = geometry_area_km2(poly)
+        width, height, _ = km_dimensions(poly)
+        if area < MIN_AREA_KM2 or area > MAX_AREA_KM2 or max(width, height) > MAX_SIDE_KM:
+            continue
+        if not tree:
+            continue
+        try:
+            candidates_idx = tree.query(poly, predicate="intersects")
+            count = len(candidates_idx)
+        except Exception:
+            count = sum(1 for point in points if poly.covers(point))
+        if count < min_buildings:
+            continue
+        simplified = polygonal(poly.simplify(0.000008, preserve_topology=True))
+        if simplified is not None:
+            output.append((simplified, count))
+    return output
+
+
+def load_communes(path: Path):
+    data = json.loads(path.read_text(encoding="utf-8"))
+    communes, geometries = [], []
+    for feature in data.get("features") or []:
+        props = feature.get("properties") or {}
+        code = str(props.get("code") or props.get("id") or feature.get("id") or "")
+        if not code:
+            continue
+        try:
+            geometry = polygonal(shape(feature["geometry"]))
+        except Exception:
+            geometry = None
+        if geometry is None:
+            continue
+        communes.append({
+            "code": code,
+            "name": str(props.get("name_fr") or props.get("name") or ""),
+            "name_ar": str(props.get("name_ar") or ""),
+            "region": str(props.get("region") or ""),
+            "region_code": str(props.get("region_code") or ""),
+            "geometry": geometry,
+        })
+        geometries.append(geometry)
+    if len(communes) < 1000:
+        raise SystemExit(f"Refusing incomplete commune coverage: only {len(communes)} polygons")
+    return communes, geometries, STRtree(geometries)
+
+
+def assign_and_clip(poly, communes, commune_geometries, commune_tree):
+    try:
+        candidates = commune_tree.query(poly, predicate="intersects")
+    except Exception:
+        candidates = commune_tree.query(poly)
+    winner, winner_geom, winner_area = None, None, 0.0
+    for raw_index in candidates:
+        index = int(raw_index)
+        geometry = commune_geometries[index]
+        try:
+            overlap = poly.intersection(geometry).area
+        except Exception:
+            continue
+        if overlap > winner_area:
+            winner_area = overlap
+            winner = communes[index]
+            winner_geom = geometry
+    if winner is None or winner_area <= 0:
+        return None, None
+    try:
+        clipped = polygonal(poly.intersection(winner_geom))
+    except Exception:
+        return None, None
+    if clipped is None:
+        return None, None
+    area = geometry_area_km2(clipped)
+    width, height, _ = km_dimensions(clipped)
+    if area < MIN_AREA_KM2 or area > MAX_AREA_KM2 or max(width, height) > MAX_SIDE_KM:
+        return None, None
+    return winner, clipped
+
+
+def main() -> int:
+    global TILE_DEGREES
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--communes", required=True, type=Path)
+    parser.add_argument("--roads", required=True, type=Path, help="OSM roads as GeoJSON Text Sequence")
+    parser.add_argument("--buildings", required=True, type=Path, help="OSM building polygons as GeoJSON Text Sequence")
+    parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--report", required=True, type=Path)
+    parser.add_argument("--target-min", type=int, default=10000)
+    parser.add_argument("--tile-size", type=float, default=TILE_DEGREES)
+    parser.add_argument("--min-buildings", type=int, default=MIN_BUILDINGS)
+    args = parser.parse_args()
+    TILE_DEGREES = args.tile_size
+
+    if not args.roads.is_file() or not args.buildings.is_file():
+        raise SystemExit("Missing roads/buildings extract; refusing to create synthetic fallback geometry.")
+
+    communes, commune_geometries, commune_tree = load_communes(args.communes)
+    road_tiles: dict[tuple[int, int], list] = defaultdict(list)
+    road_class_counts = Counter()
+    road_count = 0
+
+    for feature in read_geojson_seq(args.roads):
+        props = feature.get("properties") or {}
+        highway = str(props.get("highway") or "").lower()
+        if highway not in ROAD_CLASSES:
+            continue
+        geom = feature.get("geometry") or {}
+        kind = geom.get("type")
+        lines = [geom.get("coordinates") or []] if kind == "LineString" else (
+            geom.get("coordinates") or [] if kind == "MultiLineString" else []
+        )
+        for coords in lines:
+            # Split ways into actual node-to-node segments, so every short street edge is
+            # assigned to a nearby tile and road topology is retained at tile borders.
+            for a, b in zip(coords, coords[1:]):
+                if not isinstance(a, (list, tuple)) or not isinstance(b, (list, tuple)) or len(a) < 2 or len(b) < 2:
+                    continue
+                vals = (a[0], a[1], b[0], b[1])
+                if not all(isinstance(v, (int, float)) and math.isfinite(v) for v in vals):
+                    continue
+                if a[0] == b[0] and a[1] == b[1]:
+                    continue
+                line = LineString([(float(a[0]), float(a[1])), (float(b[0]), float(b[1]))])
+                if line.length > 0.03:
+                    continue
+                mid = line.interpolate(0.5, normalized=True)
+                road_tiles[tile_key(mid.x, mid.y)].append(line)
+                road_count += 1
+                road_class_counts[highway] += 1
+
+    building_tiles: dict[tuple[int, int], list[tuple[float, float]]] = defaultdict(list)
+    building_count_total = 0
+    for feature in read_geojson_seq(args.buildings):
+        props = feature.get("properties") or {}
+        btype = props.get("building")
+        if not btype or str(btype).lower() == "no":
+            continue
+        raw_geom = feature.get("geometry") or {}
+        try:
+            geom = polygonal(shape(raw_geom)) if raw_geom else None
+        except Exception:
+            geom = None
+        if geom is None:
+            continue
+        point = geom.representative_point()
+        building_tiles[tile_key(point.x, point.y)].append((point.x, point.y))
+        building_count_total += 1
+
+    active_tiles = sorted(key for key, points in building_tiles.items()
+                          if len(points) >= max(8, args.min_buildings * 4))
+    if not active_tiles:
+        raise SystemExit("No building-active tiles; refusing to publish empty urban sectors.")
+
+    output = []
+    seen = set()
+    per_commune = Counter()
+    road_class_names = sorted(road_class_counts.keys())
+    for tile_number, key in enumerate(active_tiles, 1):
+        local_keys = list(neighboring_tiles(key))
+        road_lines = [line for k in local_keys for line in road_tiles.get(k, [])]
+        local_building_coords = [point for k in local_keys for point in building_tiles.get(k, [])]
+        if len(road_lines) < 12 or len(local_building_coords) < args.min_buildings:
+            continue
+        core = tile_bounds(key)
+        for poly, n_buildings in polygonize_urban_blocks(
+            road_lines, local_building_coords, core, args.min_buildings
+        ):
+            commune, clipped = assign_and_clip(poly, communes, commune_geometries, commune_tree)
+            if commune is None:
+                continue
+            digest = hashlib.sha1(clipped.wkb).hexdigest()[:14]
+            if digest in seen:
+                continue
+            seen.add(digest)
+            per_commune[commune["code"]] += 1
+            serial = per_commune[commune["code"]]
+            name = f"Îlot urbain estimé {serial:04d}"
+            area = round(geometry_area_km2(clipped), 5)
+            output.append({
+                "type": "Feature",
+                "id": f"urban-block-{commune['code']}-{digest}",
+                "properties": {
+                    "name": name,
+                    "name_fr": name,
+                    "name_ar": "",
+                    "commune_id": commune["code"],
+                    "commune_name": commune["name"],
+                    "region": commune["region"],
+                    "region_code": commune["region_code"],
+                    "level": "Secteur urbain estimé (îlot borné par les rues)",
+                    "boundaryKind": "urban_block",
+                    "estimated": True,
+                    "estimationMethod": "OSM local-road polygonization + building-footprint evidence",
+                    "source": "osm_road_block",
+                    "sourceDetail": "OpenStreetMap roads and building footprints; polygonized street blocks",
+                    "sourceLicense": "ODbL-1.0",
+                    "sourceUrl": "https://www.openstreetmap.org/copyright",
+                    "buildingCount": int(n_buildings),
+                    "roadClasses": road_class_names,
+                    "areaKm2": area,
+                    "confidence": 0.78,
+                },
+                "geometry": mapping(clipped),
+            })
+
+    report = [
+        "# Urban block sector generation",
+        "",
+        "- Source roads: OpenStreetMap Geofabrik Morocco PBF, filtered to local/urban road classes.",
+        "- Source buildings: OpenStreetMap building-footprint polygons.",
+        "- Method: polygonize noded road segments; retain only enclosed polygons with building evidence; clip to commune boundaries.",
+        "- Semantics: estimated urban blocks, not official or named neighbourhood boundaries.",
+        f"- Road segments loaded: {road_count}",
+        f"- Building footprints loaded: {building_count_total}",
+        f"- Active building tiles: {len(active_tiles)}",
+        f"- Candidate sectors: {len(output)}",
+        f"- Target minimum: {args.target_min}",
+        f"- Communes represented: {len(per_commune)}",
+        f"- Road class counts: {dict(road_class_counts)}",
+        "",
+        "## Highest coverage communes",
+        "",
+    ]
+    for code, count in per_commune.most_common(30):
+        report.append(f"- {code}: {count}")
+    args.report.parent.mkdir(parents=True, exist_ok=True)
+    args.report.write_text("\n".join(report) + "\n", encoding="utf-8")
+
+    if len(output) < args.target_min:
+        raise SystemExit(
+            f"Only {len(output)} street-bounded sectors passed the geometry/building filters; "
+            f"{args.target_min} required. Previous published data must be retained."
+        )
+
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(
+        json.dumps({"type": "FeatureCollection", "features": output}, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    print(f"Urban sectors accepted: {len(output)} (target >= {args.target_min}); "
+          f"{len(per_commune)} communes; {road_count} road segments; {building_count_total} building footprints.")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

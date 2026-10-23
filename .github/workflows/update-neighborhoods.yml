@@ -8,6 +8,7 @@ on:
       - "tools/prepare-neighborhood-boundaries-multi-source.py"
       - "tools/fetch-overture-neighborhood-areas.py"
       - "tools/convert-multi-source-to-site-format.py"
+      - "tools/build-urban-block-sectors.py"
       - ".github/workflows/update-neighborhoods.yml"
 
 permissions:
@@ -32,6 +33,11 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+
+      - name: Install OSM geometry tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y osmium-tool
 
       - name: Install dependencies
         run: |
@@ -197,13 +203,52 @@ jobs:
           print("Contrôles de sortie réussis.")
           PY
 
+      - name: Download current Morocco OSM extract and export road/building geometry
+        timeout-minutes: 45
+        run: |
+          set -euo pipefail
+          PBF_URL="https://download.geofabrik.de/africa/morocco-latest.osm.pbf"
+          curl -fL --retry 3 --retry-delay 5 "$PBF_URL" -o /tmp/morocco-latest.osm.pbf
+          curl -fL --retry 3 --retry-delay 3 "$PBF_URL.md5" -o /tmp/morocco-latest.osm.pbf.md5
+          EXPECTED="$(awk '{print $1}' /tmp/morocco-latest.osm.pbf.md5 | head -n 1)"
+          echo "$EXPECTED  /tmp/morocco-latest.osm.pbf" | md5sum -c -
+
+          osmium tags-filter /tmp/morocco-latest.osm.pbf \
+            w/highway=primary w/highway=secondary w/highway=tertiary \
+            w/highway=unclassified w/highway=residential w/highway=living_street \
+            w/highway=service w/highway=pedestrian w/highway=road \
+            -o /tmp/morocco-roads.osm.pbf
+          osmium export /tmp/morocco-roads.osm.pbf \
+            -f geojsonseq --geometry-types=linestring -o /tmp/morocco-roads.geojsonseq
+
+          osmium tags-filter /tmp/morocco-latest.osm.pbf w/building \
+            -o /tmp/morocco-buildings.osm.pbf
+          osmium export /tmp/morocco-buildings.osm.pbf \
+            -f geojsonseq --geometry-types=polygon -o /tmp/morocco-buildings.geojsonseq
+
+          ls -lh /tmp/morocco-roads.geojsonseq /tmp/morocco-buildings.geojsonseq
+          rm -f /tmp/morocco-latest.osm.pbf /tmp/morocco-latest.osm.pbf.md5 \
+            /tmp/morocco-roads.osm.pbf /tmp/morocco-buildings.osm.pbf
+
+      - name: Build at least 10000 road-bounded urban sectors
+        timeout-minutes: 45
+        run: |
+          python tools/build-urban-block-sectors.py \
+            --communes assets/data/division_area.geojson \
+            --roads /tmp/morocco-roads.geojsonseq \
+            --buildings /tmp/morocco-buildings.geojsonseq \
+            --output assets/data/urban-block-sectors.geojson \
+            --report reports/urban-block-coverage.md \
+            --target-min 10000
+
       - name: Convert validated data to site format
         run: |
           python tools/convert-multi-source-to-site-format.py \
             --input assets/data/neighborhoods-estimated.geojson \
             --output-dir assets/neighborhood-boundaries \
             --index assets/neighborhood-boundaries-index.json \
-            --mapped-only
+            --mapped-only \
+            --urban-blocks assets/data/urban-block-sectors.geojson
 
       - name: Synchronize data catalog, index version and cache version
         run: |
@@ -232,7 +277,7 @@ jobs:
           if count != 1:
               raise SystemExit("Impossible de synchroniser la version de l'index dans map-app.js.")
 
-          cache_version = "maroc-v27-" + time.strftime("%Y%m%d", time.gmtime())
+          cache_version = "maroc-v28-" + time.strftime("%Y%m%d", time.gmtime())
           app = re.sub(r"maroc-v\d+-\d{8}", cache_version, app)
           app_path.write_text(app, encoding="utf-8")
 
@@ -257,20 +302,21 @@ jobs:
               "features": features,
               "mappedFeatures": int(index.get("mappedFeatures", 0)),
               "estimatedFeatures": int(index.get("estimatedFeatures", 0)),
+              "urbanBlockFeatures": int(index.get("urbanBlockFeatures", 0)),
               "communesWithFeatures": int(index.get("communesWithFeatures", 0)),
               "regions": len(regions),
               "bytesCompressed": sum(int(region.get("bytesCompressed", 0)) for region in regions),
-              "loading": "Contours de quartiers cartographiés uniquement, chargés à partir du zoom 11+ ; les cellules estimées sont exclues.",
-              "method": f"{features} polygones cartographiés avec géométrie source conservée.",
+              "loading": "Quartiers cartographiés et îlots urbains estimés à partir du réseau routier et des empreintes de bâtiments OSM, visibles au zoom 11+.",
+              "method": f"{int(index.get('mappedFeatures', 0))} contours cartographiés + {int(index.get('urbanBlockFeatures', 0))} îlots urbains estimés.",
               "license": " ; ".join(index.get("licenses", ["ODbL 1.0"])),
-              "limitation": "La couverture varie selon la ville ; aucune cellule Voronoï estimative n’est publiée comme quartier.",
+              "limitation": "Les îlots urbains suivent les rues et les empreintes bâties, mais ne sont pas des quartiers officiels. Les zones où OSM est incomplet peuvent rester sans secteur.",
           })
           catalog["version"] = cache_version
           catalog_path.write_text(
               json.dumps(catalog, ensure_ascii=False, indent=2) + "\n",
               encoding="utf-8",
           )
-          print(f"Catalogue synchronisé : {features} contours cartographiés, {len(regions)} régions, version {cache_version}.")
+          print(f"Catalogue synchronisé : {features} secteurs, dont {index.get('mappedFeatures', 0)} contours cartographiés et {index.get('urbanBlockFeatures', 0)} îlots estimés ; {len(regions)} régions, version {cache_version}.")
           print(f"Index de géométries : {index['version']}")
           PY
 
@@ -284,12 +330,18 @@ jobs:
           catalog = json.loads(Path("assets/data-catalog.json").read_text(encoding="utf-8"))
           regions = index.get("regions", [])
           total = sum(int(region.get("count", 0)) for region in regions)
-          if index.get("features", 0) < 30 or total != index.get("features"):
-              raise SystemExit("Index des contours cartographiés incohérent ; aucune publication proposée.")
-          if index.get("estimatedFeatures", 0) != 0 or index.get("mappedFeatures", 0) != index["features"]:
-              raise SystemExit("Le jeu contient des cellules estimées : publication refusée.")
+          mapped = int(index.get("mappedFeatures", 0))
+          urban_blocks = int(index.get("urbanBlockFeatures", 0))
+          if index.get("features", 0) < 10000 or total != index.get("features"):
+              raise SystemExit("Le jeu doit contenir au moins 10000 secteurs cohérents ; publication refusée.")
+          if index.get("estimatedFeatures", 0) != 0 or mapped + urban_blocks != index["features"]:
+              raise SystemExit("Le jeu contient des Voronoï ou des estimations non qualifiées ; publication refusée.")
+          if urban_blocks < 10000:
+              raise SystemExit(f"Seulement {urban_blocks} îlots urbains estimés ; 10000 requis.")
           if len(regions) < 4:
-              raise SystemExit(f"Couverture de vrais contours trop faible : {len(regions)} régions.")
+              raise SystemExit(f"Couverture géographique trop faible : {len(regions)} régions.")
+          if catalog["layers"]["neighborhoodBoundaries"].get("urbanBlockFeatures", 0) != urban_blocks:
+              raise SystemExit("Le catalogue et l'index ne décrivent pas les mêmes îlots urbains.")
           if catalog["layers"]["neighborhoodBoundaries"]["features"] != index["features"]:
               raise SystemExit("Catalogue et index ne correspondent pas.")
           app = Path("assets/map-app.js").read_text(encoding="utf-8")

@@ -1,5 +1,5 @@
 {
-  "version": "maroc-v27-20261023",
+  "version": "maroc-v28-20261023",
   "generatedAt": "2026-10-21T08:25:58Z",
   "strategy": "native-esm-lazy-map",
   "layers": {
@@ -49,14 +49,15 @@
       "communesWithFeatures": 33,
       "regions": 9,
       "bytesCompressed": 20541,
-      "loading": "Contours de quartiers cartographiés uniquement, chargés à partir du zoom 11+ ; les cellules estimées sont exclues.",
+      "loading": "Quartiers cartographiés et, lorsque la couverture le permet, au moins 10000 îlots urbains estimés à partir des rues et empreintes de bâtiments OSM, visibles au zoom 11+.",
       "geometrySources": [
         "Contours cartographiés OpenStreetMap (place=neighbourhood/suburb/quarter)",
         "Secteurs indicatifs estimés à partir de lieux habités OpenStreetMap et des contours communaux"
       ],
-      "method": "83 polygones cartographiés avec géométrie source conservée.",
+      "method": "Contours cartographiés conservés ; îlots urbains générés par polygonisation du réseau routier et validation par empreintes de bâtiments, puis découpés aux limites communales.",
       "license": "ODbL 1.0 ; CC-BY 4.0",
-      "limitation": "La couverture varie selon la ville ; aucune cellule Voronoï estimative n’est publiée comme quartier."
+      "limitation": "Les îlots estimés suivent la structure viaire mais ne sont pas des quartiers officiels ; seules les zones suffisamment cartographiées sont retenues.",
+      "urbanBlockFeatures": 0
     },
     "basemap": {
       "url": "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
