@@ -65,5 +65,55 @@ class NeighborhoodPipelineTests(unittest.TestCase):
             self.assertFalse(index_path.exists())
 
 
+class PublishedDataIntegrityTests(unittest.TestCase):
+    def test_neighborhood_index_matches_catalog_and_compressed_regions(self):
+        import gzip
+
+        index_path = ROOT / "assets" / "neighborhood-boundaries-index.json"
+        catalog_path = ROOT / "assets" / "data-catalog.json"
+        index = json.loads(index_path.read_text(encoding="utf-8"))
+        catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
+        layer = catalog["layers"]["neighborhoodBoundaries"]
+        regions = index["regions"]
+
+        self.assertEqual(len(regions), 12, "Les 12 régions administratives doivent être présentes.")
+        self.assertGreater(index["features"], 0)
+        self.assertEqual(sum(region["count"] for region in regions), index["features"])
+        self.assertEqual(sum(region["mapped"] for region in regions), index["mappedFeatures"])
+        self.assertEqual(sum(region["estimated"] for region in regions), index["estimatedFeatures"])
+        self.assertEqual(sum(region["bytesCompressed"] for region in regions), layer["bytesCompressed"])
+        self.assertEqual(layer["features"], index["features"])
+        self.assertEqual(layer["mappedFeatures"], index["mappedFeatures"])
+        self.assertEqual(layer["estimatedFeatures"], index["estimatedFeatures"])
+        self.assertEqual(layer["communesWithFeatures"], index["communesWithFeatures"])
+
+        for region in regions:
+            with self.subTest(region=region["code"]):
+                path = ROOT / region["url"]
+                self.assertTrue(path.is_file(), f"Fichier régional manquant : {path}")
+                with gzip.open(path, "rt", encoding="utf-8") as stream:
+                    geojson = json.load(stream)
+                self.assertEqual(geojson.get("type"), "FeatureCollection")
+                self.assertEqual(len(geojson.get("features", [])), region["count"])
+                self.assertTrue(geojson.get("features"), "Une région publiée ne doit pas être vide.")
+
+    def test_frontend_cache_busting_versions_are_synchronized(self):
+        import re
+
+        html = (ROOT / "carte-interactive-maroc.html").read_text(encoding="utf-8")
+        boot = (ROOT / "assets" / "map-boot.js").read_text(encoding="utf-8")
+        app = (ROOT / "assets" / "map-app.js").read_text(encoding="utf-8")
+        service_worker = (ROOT / "sw.js").read_text(encoding="utf-8")
+        catalog = json.loads((ROOT / "assets" / "data-catalog.json").read_text(encoding="utf-8"))
+        expected = catalog["version"]
+
+        self.assertRegex(expected, r"^maroc-v\\d+-\\d{8}$")
+        self.assertIn(expected, html)
+        self.assertIn(expected, boot)
+        self.assertIn(expected, app)
+        self.assertIn(expected, service_worker)
+        self.assertIn(expected, service_worker.splitlines()[0])
+
+
 if __name__ == "__main__":
     unittest.main()
