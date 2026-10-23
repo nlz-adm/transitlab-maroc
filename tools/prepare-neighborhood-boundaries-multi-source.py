@@ -777,6 +777,11 @@ def main() -> int:
             })
             stats["by_region"][region]["quartiers"] += 1
 
+    # Refuser une sortie vide avant d'écraser un éventuel fichier précédent.
+    if not features:
+        print("ERREUR: aucune géométrie de quartier produite. Sortie précédente conservée.", file=sys.stderr)
+        return 2
+
     # Sauvegarde GeoJSON
     output = Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)
