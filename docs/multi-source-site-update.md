@@ -42,15 +42,15 @@ Le jeu de limites déjà publié est conservé tant que le pipeline multi-source
 
 ## 🚀 Utilisation
 
-### Option A : Régénération automatique (recommandé)
+### Option A : Régénération contrôlée (manuel uniquement)
 
-Le workflow GitHub Actions est volontairement manuel uniquement. Il vérifie la sortie du pipeline avant conversion et échoue sans publier si le GeoJSON est vide, anormalement incomplet par rapport au jeu actuellement publié, ou couvre trop peu de communes. Pour lancer un essai :
+Le workflow GitHub Actions est volontairement manuel uniquement. Il vérifie la sortie du pipeline avant conversion et échoue sans publier si le GeoJSON est vide, anormalement incomplet par rapport au jeu actuellement publié, ou couvre trop peu de communes. Une sortie validée est déposée dans une branche de données et proposée en pull request ; elle n'est pas publiée directement sur `main`. Pour lancer un essai :
 
 1. Allez dans l'onglet **Actions** du dépôt
 2. Sélectionnez **Update Neighborhood Boundaries**
 3. Cliquez sur **Run workflow**
 4. Attendez la fin de l'exécution (~5-10 minutes)
-5. Les fichiers seront automatiquement commités et poussés
+5. Le workflow ouvre une pull request si les données validées diffèrent du jeu publié ; relisez le rapport et les cartes avant de fusionner
 
 ### Option B : Régénération locale
 
