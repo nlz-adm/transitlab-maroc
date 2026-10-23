@@ -123,9 +123,11 @@ class PublishedDataIntegrityTests(unittest.TestCase):
                 self.assertTrue((ROOT / icon["src"]).is_file(), f"Icône PWA manquante : {icon['src']}")
 
         worker = (ROOT / "sw.js").read_text(encoding="utf-8")
-        match = re.search(r"const STATIC_ASSETS = \\[(.*?)\\];", worker, re.S)
-        self.assertIsNotNone(match, "Liste de précache du service worker introuvable.")
-        assets = re.findall(r"['\"]([^'\"]+)['\"]", match.group(1))
+        start = worker.find("const STATIC_ASSETS = [")
+        end = worker.find("];", start)
+        self.assertGreaterEqual(start, 0, "Liste de précache du service worker introuvable.")
+        self.assertGreater(end, start, "Liste de précache du service worker incomplète.")
+        assets = re.findall(r"['\\"]([^'\\"]+)['\\"]", worker[start:end])
         for asset in assets:
             with self.subTest(asset=asset):
                 if asset.startswith("./"):
