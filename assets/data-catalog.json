@@ -1,5 +1,5 @@
 {
-  "version": "maroc-v17-20261021",
+  "version": "maroc-v18-20261023",
   "generatedAt": "2026-10-21T08:25:58Z",
   "strategy": "native-esm-lazy-map",
   "layers": {
@@ -145,11 +145,11 @@
   "scripts": {
     "boot": {
       "url": "assets/map-boot.js",
-      "bytes": 665
+      "bytes": 650
     },
     "app": {
       "url": "assets/map-app.js",
-      "bytes": 158403
+      "bytes": 154940
     },
     "worker": {
       "url": "assets/line-index-worker.js",
