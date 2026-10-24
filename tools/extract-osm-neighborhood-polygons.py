@@ -6,6 +6,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Any, Iterable
 from shapely.geometry import MultiPolygon, shape, mapping
+from shapely.strtree import STRtree
 from shapely.validation import make_valid
 
 PLACE_TYPES = {"quarter", "suburb", "neighbourhood", "neighborhood", "microhood", "macrohood"}
@@ -69,11 +70,11 @@ def osm_feature_to_neighbourhood(feature: dict, stats: Counter) -> dict | None:
     props = flatten_properties(feature)
     place = str(props.get("place") or "").strip().casefold()
     boundary = str(props.get("boundary") or "").strip().casefold()
-    if place not in PLACE_TYPES and boundary != "place":
-        stats["skip_not_neighborhood_tag"] += 1
-        return None
     if place in NON_NEIGHBORHOOD_PLACES:
         stats["skip_settlement_or_admin"] += 1
+        return None
+    if place not in PLACE_TYPES and boundary != "place":
+        stats["skip_not_neighborhood_tag"] += 1
         return None
     name = str(props.get("name:fr") or props.get("name_fr") or props.get("name")
                 or props.get("name:en") or props.get("name:ar") or props.get("name_ar") or "").strip()
