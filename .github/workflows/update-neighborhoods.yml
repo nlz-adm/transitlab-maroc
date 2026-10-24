@@ -394,7 +394,7 @@ jobs:
           if count != 1:
               raise SystemExit("Impossible de synchroniser la version de l'index dans map-app.js.")
 
-          cache_version = "maroc-v31-" + time.strftime("%Y%m%d", time.gmtime())
+          cache_version = "maroc-v32-" + time.strftime("%Y%m%d", time.gmtime())
           app = re.sub(r"maroc-v\d+-\d{8}", cache_version, app)
           app_path.write_text(app, encoding="utf-8")
 
@@ -420,13 +420,14 @@ jobs:
               "mappedFeatures": int(index.get("mappedFeatures", 0)),
               "estimatedFeatures": int(index.get("estimatedFeatures", 0)),
               "urbanBlockFeatures": int(index.get("urbanBlockFeatures", 0)),
+              "estimatedNeighborhoodFeatures": int(index.get("estimatedNeighborhoodFeatures", 0)),
               "communesWithFeatures": int(index.get("communesWithFeatures", 0)),
               "regions": len(regions),
               "bytesCompressed": sum(int(region.get("bytesCompressed", 0)) for region in regions),
-              "loading": "Quartiers cartographiés et îlots urbains estimés à partir du réseau routier et des empreintes de bâtiments OSM, visibles au zoom 11+.",
-              "method": f"{int(index.get('mappedFeatures', 0))} contours cartographiés + {int(index.get('urbanBlockFeatures', 0))} îlots urbains estimés.",
+              "loading": "Contours cartographiés, unités de quartier estimées par fusion de blocs routiers contigus et îlots urbains estimés ; visibles au zoom 11+.",
+              "method": f"{int(index.get('mappedFeatures', 0))} contours cartographiés + {int(index.get('estimatedNeighborhoodFeatures', 0))} unités de quartier estimées + {int(index.get('urbanBlockFeatures', 0))} îlots urbains estimés.",
               "license": " ; ".join(index.get("licenses", ["ODbL 1.0"])),
-              "limitation": "Les îlots urbains suivent les rues et les empreintes bâties, mais ne sont pas des quartiers officiels. Les zones où OSM est incomplet peuvent rester sans secteur.",
+              "limitation": "Les unités de quartier estimées sont des groupes d’îlots contigus, non des limites officielles ; les îlots urbains restent une couche distincte. Les contours cartographiés conservent leurs sources.",
           })
           directory_index_path = Path("assets/neighborhood-directory-index.json")
           directory_index = json.loads(directory_index_path.read_text(encoding="utf-8"))
