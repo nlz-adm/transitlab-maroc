@@ -138,7 +138,7 @@ class PostalNeighborhoodRegistryTests(unittest.TestCase):
         ]
 
         features, totals, city_stats, duplicates = MODULE.build_registry(
-            records, candidates, include_unmatched_osm=True
+            records, candidates, include_unmatched_mapped=True
         )
 
         self.assertEqual(len(features), 4)
