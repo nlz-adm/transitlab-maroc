@@ -32,7 +32,7 @@
       "estimated": 0,
       "urbanBlocks": 1595,
       "communes": 80,
-      "bytesCompressed": 223230
+      "bytesCompressed": 223227
     },
     {
       "code": "03",
@@ -48,7 +48,7 @@
       "estimated": 0,
       "urbanBlocks": 481,
       "communes": 39,
-      "bytesCompressed": 74384
+      "bytesCompressed": 74386
     },
     {
       "code": "04",
@@ -64,7 +64,7 @@
       "estimated": 0,
       "urbanBlocks": 767,
       "communes": 38,
-      "bytesCompressed": 149567
+      "bytesCompressed": 149562
     },
     {
       "code": "05",
@@ -80,7 +80,7 @@
       "estimated": 0,
       "urbanBlocks": 156,
       "communes": 20,
-      "bytesCompressed": 21053
+      "bytesCompressed": 21071
     },
     {
       "code": "06",
@@ -96,7 +96,7 @@
       "estimated": 0,
       "urbanBlocks": 617,
       "communes": 33,
-      "bytesCompressed": 143275
+      "bytesCompressed": 143370
     },
     {
       "code": "07",
@@ -112,7 +112,7 @@
       "estimated": 0,
       "urbanBlocks": 2158,
       "communes": 100,
-      "bytesCompressed": 435542
+      "bytesCompressed": 435538
     },
     {
       "code": "08",
@@ -128,7 +128,7 @@
       "estimated": 0,
       "urbanBlocks": 877,
       "communes": 52,
-      "bytesCompressed": 122613
+      "bytesCompressed": 122612
     },
     {
       "code": "09",
@@ -144,7 +144,7 @@
       "estimated": 0,
       "urbanBlocks": 1391,
       "communes": 96,
-      "bytesCompressed": 297560
+      "bytesCompressed": 297559
     },
     {
       "code": "10",

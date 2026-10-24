@@ -1,6 +1,6 @@
 # Répertoire des quartiers sourcés (Poste Maroc + OpenStreetMap)
 
-- Généré le : 2026-10-24T10:24:01+00:00
+- Généré le : 2026-10-24T10:47:08+00:00
 - Source postale : [Barid Al Maghrib — Codes postaux des quartiers](https://data.gov.ma/data/dataset/e0093dbf-38f0-440a-91da-ad3f0243f378/resource/7f257007-d512-4a2e-9f7f-ba29ee4ac8b1/download/codes-postaux-quartiers-2018.xlsx)
 - Date du jeu postal source : septembre 2018
 - Géométries supplémentaires : entités nommées OpenStreetMap, données au moment du rafraîchissement
