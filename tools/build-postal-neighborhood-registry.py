@@ -19,6 +19,7 @@ from pathlib import Path
 from typing import Any
 
 from shapely.geometry import shape, mapping
+from shapely.strtree import STRtree
 from shapely.validation import make_valid
 
 SOURCE_URL = "https://data.gov.ma/data/dataset/e0093dbf-38f0-440a-91da-ad3f0243f378/resource/7f257007-d512-4a2e-9f7f-ba29ee4ac8b1/download/codes-postaux-quartiers-2018.xlsx"
@@ -172,16 +173,72 @@ def read_geojsonseq(path: Path | None) -> list[dict[str, Any]]:
             city = str(props.get("addr:city") or props.get("is_in:city") or props.get("city") or "").strip()
             candidates.append({
                 "name": name,
+                "nameFr": str(props.get("name:fr") or props.get("name_fr") or ""),
+                "nameAr": str(props.get("name:ar") or props.get("name_ar") or ""),
                 "nameKey": key,
                 "city": city,
                 "cityKey": fold(city),
                 "sourceId": str(props.get("@id") or feature.get("id") or ""),
+                "placeType": place or ("boundary=place" if fold(props.get("boundary")) == "place" else ""),
                 "geometry": geom,
             })
     return candidates
 
 
-def build_registry(records: list[dict[str, str]], candidates: list[dict[str, Any]]):
+def prepare_commune_areas(path: Path | None):
+    """Prepare an STRtree for assigning untagged OSM names to the commune containing their geometry."""
+    if path is None or not path.is_file():
+        return [], [], None
+    collection = json.loads(path.read_text(encoding="utf-8"))
+    communes, geometries = [], []
+    for feature in collection.get("features", []):
+        props = feature.get("properties") or {}
+        try:
+            geometry = make_valid(shape(feature.get("geometry")))
+        except Exception:
+            continue
+        if geometry.is_empty or geometry.geom_type not in {"Polygon", "MultiPolygon"}:
+            continue
+        name = str(props.get("name_fr") or props.get("name") or props.get("nom") or "").strip()
+        code = str(props.get("code") or props.get("commune_id") or props.get("id") or feature.get("id") or "").strip()
+        if not code:
+            continue
+        communes.append({"name": name, "code": code, "geometry": geometry})
+        geometries.append(geometry)
+    return communes, geometries, STRtree(geometries) if geometries else None
+
+
+def enrich_candidates_with_communes(candidates, communes, geometries, tree):
+    """Add a commune code/name from the actual geometry without guessing the neighbourhood boundary."""
+    if not tree:
+        return
+    for candidate in candidates:
+        geometry = candidate["geometry"]
+        point = geometry if geometry.geom_type == "Point" else geometry.representative_point()
+        candidate_indices = tree.query(point)
+        matches = []
+        for raw_index in candidate_indices:
+            index = int(raw_index)
+            commune_geometry = geometries[index]
+            if commune_geometry.covers(point):
+                matches.append(index)
+        if not matches:
+            continue
+        winner = min(matches, key=lambda index: geometries[index].area)
+        commune = communes[winner]
+        candidate["communeCode"] = commune["code"]
+        candidate["communeName"] = commune["name"]
+        if not candidate.get("city"):
+            candidate["city"] = commune["name"]
+            candidate["cityKey"] = fold(commune["name"])
+
+
+def build_registry(
+    records: list[dict[str, str]],
+    candidates: list[dict[str, Any]],
+    *,
+    include_unmatched_osm: bool = False,
+):
     by_name: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for candidate in candidates:
         by_name[candidate["nameKey"]].append(candidate)
@@ -191,6 +248,9 @@ def build_registry(records: list[dict[str, str]], candidates: list[dict[str, Any
     seen_names: set[tuple[str, str]] = set()
     duplicate_names: set[tuple[str, str]] = set()
     totals = Counter()
+    postal_pairs = {(row["cityKey"], row["nameKey"]) for row in records}
+    postal_name_keys = {row["nameKey"] for row in records}
+    used_osm_source_ids: set[str] = set()
     for row in records:
         pair = (row["cityKey"], row["nameKey"])
         if pair in seen_names:
@@ -221,6 +281,8 @@ def build_registry(records: list[dict[str, str]], candidates: list[dict[str, Any
             is_polygon = chosen["geometry"].geom_type in {"Polygon", "MultiPolygon"}
             status = "mapped_boundary" if is_polygon else "mapped_point"
             source, source_id = "osm", chosen["sourceId"]
+            if source_id:
+                used_osm_source_ids.add(source_id)
         else:
             status, source, source_id = "unlocated", "", ""
         totals[status] += 1
@@ -251,6 +313,72 @@ def build_registry(records: list[dict[str, str]], candidates: list[dict[str, Any
             "properties": properties,
             "geometry": geometry,
         })
+
+    osm_supplement_count = 0
+    if include_unmatched_osm:
+        # Prefer a real polygon over a point for the same normalized name and commune.
+        # Postal records always remain untouched; only additional source-mapped OSM entities
+        # not already matched to a postal row are appended.
+        def supplemental_rank(item):
+            geom = item["geometry"]
+            is_polygon = geom.geom_type in {"Polygon", "MultiPolygon"}
+            return (0 if is_polygon else 1, float(geom.area) if is_polygon else float("inf"))
+
+        added_pairs: set[tuple[str, str]] = set()
+        for candidate in sorted(candidates, key=supplemental_rank):
+            name_key_value = candidate["nameKey"]
+            city_key_value = candidate.get("cityKey") or ""
+            source_id = candidate.get("sourceId") or ""
+            if source_id and source_id in used_osm_source_ids:
+                continue
+            pair = (city_key_value, name_key_value)
+            if city_key_value and pair in postal_pairs:
+                continue
+            if not city_key_value and name_key_value in postal_name_keys:
+                # Without a city match we cannot safely tell whether this is another spelling
+                # of a postal row or a different place with the same name.
+                continue
+            if pair in added_pairs:
+                continue
+            geom_obj = candidate["geometry"]
+            if geom_obj.is_empty or geom_obj.geom_type not in {"Point", "Polygon", "MultiPolygon"}:
+                continue
+            status = "mapped_boundary" if geom_obj.geom_type in {"Polygon", "MultiPolygon"} else "mapped_point"
+            stable_id = source_id or hashlib.sha1(
+                (name_key_value + "|" + city_key_value + "|" + geom_obj.wkb_hex).encode("utf-8")
+            ).hexdigest()[:16]
+            properties = {
+                "name": candidate["name"],
+                "name_fr": candidate.get("nameFr") or candidate["name"],
+                "name_ar": candidate.get("nameAr") or "",
+                "city": candidate.get("city") or "",
+                "communeCode": candidate.get("communeCode") or "",
+                "postalCode": "",
+                "source": "openstreetmap",
+                "sourceDetail": "Entité nommée OpenStreetMap supplémentaire (non fusionnée avec le catalogue postal)",
+                "sourceUrl": "https://www.openstreetmap.org/",
+                "sourceLicense": "ODbL-1.0",
+                "sourceRow": "",
+                "sourceId": stable_id,
+                "geometryStatus": status,
+                "geometrySource": "osm",
+                "geometrySourceId": stable_id,
+                "boundaryKind": "mapped" if status == "mapped_boundary" else "neighborhood_point",
+                "estimated": False if status == "mapped_boundary" else None,
+                "placeType": candidate.get("placeType") or "",
+                "geometryAssignment": "commune_containment" if candidate.get("communeCode") else "source_city_tag",
+            }
+            features.append({
+                "type": "Feature",
+                "id": "osm-directory-" + stable_id,
+                "properties": properties,
+                "geometry": mapping(geom_obj),
+            })
+            totals[status] += 1
+            city_stats[properties["city"] or "Ville non renseignée"][status] += 1
+            added_pairs.add(pair)
+            osm_supplement_count += 1
+
     return features, totals, city_stats, len(duplicate_names)
 
 
@@ -263,14 +391,23 @@ def write_outputs(features, totals, city_stats, duplicates, output: Path, index_
     with output.open("wb") as raw:
         with gzip.GzipFile(fileobj=raw, mode="wb", mtime=0) as stream:
             stream.write(payload)
+    postal_features = sum(1 for feature in features if (feature.get("properties") or {}).get("source") == "poste_maroc_2018")
+    osm_features = sum(1 for feature in features if (feature.get("properties") or {}).get("source") == "openstreetmap")
+    if postal_features == 0 and osm_features == 0:
+        # Backward-compatible default for synthetic unit-test fixtures.
+        postal_features = len(features)
+    if postal_features < 10000:
+        raise ValueError(f"Only {postal_features} Poste Maroc rows; 10000 required regardless of OSM supplements")
     index = {
-        "version": "morocco-postal-neighborhood-directory-" + datetime.now(timezone.utc).strftime("%Y%m%d"),
+        "version": "morocco-neighborhood-directory-" + datetime.now(timezone.utc).strftime("%Y%m%d"),
         "generatedAt": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
-        "source": "Barid Al Maghrib · Codes postaux des quartiers",
-        "sourceDate": "2018-09",
+        "source": "Barid Al Maghrib · Codes postaux des quartiers + OpenStreetMap",
+        "sourceDate": "Poste Maroc 2018-09 ; OSM au moment du rafraîchissement",
         "sourceUrl": SOURCE_URL,
         "license": "ODbL-1.0",
         "features": len(features),
+        "postalFeatures": postal_features,
+        "osmSupplementFeatures": osm_features,
         "mappedBoundaryFeatures": totals["mapped_boundary"],
         "mappedPointFeatures": totals["mapped_point"],
         "unlocatedFeatures": totals["unlocated"],
@@ -282,12 +419,15 @@ def write_outputs(features, totals, city_stats, duplicates, output: Path, index_
     index_path.write_text(json.dumps(index, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
     lines = [
-        "# Répertoire des quartiers de Poste Maroc", "",
+        "# Répertoire des quartiers sourcés (Poste Maroc + OpenStreetMap)", "",
         f"- Généré le : {index['generatedAt']}",
-        f"- Source : [Barid Al Maghrib — Codes postaux des quartiers]({SOURCE_URL})",
-        "- Date du jeu source : septembre 2018",
+        f"- Source postale : [Barid Al Maghrib — Codes postaux des quartiers]({SOURCE_URL})",
+        "- Date du jeu postal source : septembre 2018",
+        "- Géométries supplémentaires : entités nommées OpenStreetMap, données au moment du rafraîchissement",
         "- Licence déclarée : ODbL 1.0",
-        f"- Enregistrements conservés : {len(features)}",
+        f"- Entrées totales : {len(features)}",
+        f"- Entrées postales conservées : {postal_features}",
+        f"- Entités OSM supplémentaires non fusionnées avec le postal : {osm_features}",
         f"- Villes distinctes : {len(city_stats)}",
         f"- Contours de quartiers cartographiés trouvés : {totals['mapped_boundary']}",
         f"- Localisations ponctuelles trouvées (pas des frontières) : {totals['mapped_point']}",
@@ -311,13 +451,19 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--postal-data", "--postal-xlsx", dest="postal_data", required=True, type=Path)
     parser.add_argument("--osm-geojsonseq", type=Path, default=None)
+    parser.add_argument("--communes", type=Path, default=None, help="Optional commune polygons for spatially assigning OSM names")
+    parser.add_argument("--include-unmatched-osm", action="store_true", help="Append named OSM features not matched to postal rows")
     parser.add_argument("--output", type=Path, default=Path("assets/neighborhood-directory/postal-neighborhoods.geojson.gz"))
     parser.add_argument("--index", type=Path, default=Path("assets/neighborhood-directory-index.json"))
     parser.add_argument("--report", type=Path, default=Path("reports/postal-neighborhood-coverage.md"))
     args = parser.parse_args()
     records = load_postal_rows(args.postal_data)
     candidates = read_geojsonseq(args.osm_geojsonseq)
-    features, totals, city_stats, duplicates = build_registry(records, candidates)
+    communes, commune_geometries, commune_tree = prepare_commune_areas(args.communes)
+    enrich_candidates_with_communes(candidates, communes, commune_geometries, commune_tree)
+    features, totals, city_stats, duplicates = build_registry(
+        records, candidates, include_unmatched_osm=args.include_unmatched_osm
+    )
     index = write_outputs(features, totals, city_stats, duplicates, args.output, args.index, args.report)
     print(f"Quartiers Poste Maroc : {index['features']} entrées; "
           f"{index['mappedBoundaryFeatures']} contours, {index['mappedPointFeatures']} points, "

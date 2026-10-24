@@ -1,5 +1,5 @@
 {
-  "version": "maroc-v30-20261024",
+  "version": "maroc-v31-20261024",
   "generatedAt": "2026-10-21T08:25:58Z",
   "strategy": "native-esm-lazy-map",
   "layers": {
@@ -143,12 +143,12 @@
       "mappedPointFeatures": 633,
       "unlocatedFeatures": 9379,
       "bytesCompressed": 347980,
-      "source": "Barid Al Maghrib · Codes postaux des quartiers",
+      "source": "Barid Al Maghrib 2018 + OpenStreetMap",
       "sourceDate": "2018-09",
       "license": "ODbL 1.0",
       "loading": "Répertoire des noms de quartiers par ville et code postal, avec géométries OSM uniquement lorsque le nom est localisé de façon fiable.",
-      "method": "Correspondance entre la ville et le nom de quartier Poste Maroc et les entités OSM place=quarter/suburb/neighbourhood/locality ou boundary=place.",
-      "limitation": "La source postale ne fournit pas de contours. Les points ne sont pas des frontières et les entrées non localisées restent sans géométrie ; aucune limite n'est inventée."
+      "method": "10 026 entrées postales conservées, plus entités nommées OSM supplémentaires non fusionnées lorsque leurs géométries sont réelles et leur nom distinct.",
+      "limitation": "Poste Maroc ne fournit pas de contours ; les points ne sont pas des frontières. Les entrées sans géométrie fiable restent non localisées, aucune limite n’est inventée."
     }
   },
   "scripts": {
