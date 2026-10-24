@@ -12,6 +12,7 @@ on:
       - "tools/convert-multi-source-to-site-format.py"
       - "tools/build-urban-block-sectors.py"
       - "tools/build-postal-neighborhood-registry.py"
+      - "tools/build-douar-map-layer.py"
       - ".github/workflows/update-neighborhoods.yml"
 
 permissions:
@@ -342,6 +343,30 @@ jobs:
             --index assets/neighborhood-directory-index.json \
             --report reports/postal-neighborhood-coverage.md
 
+      - name: Build the HCP 2024 rural douar point layer
+        timeout-minutes: 10
+        run: |
+          set -euo pipefail
+          # Pin the public upstream data so the import is reproducible.
+          SOURCE_COMMIT="7204f75e503c59c7f34c2b7ced7fe47ccff5558c"
+          SOURCE_BASE="https://raw.githubusercontent.com/zkousama/morocco-communes/$SOURCE_COMMIT"
+          mkdir -p /tmp/transitlab-douars
+          for region in $(seq -w 1 12); do
+            curl -fLsS --connect-timeout 20 --max-time 180 --retry 3 --retry-all-errors --retry-delay 2 \
+              "$SOURCE_BASE/data/v1/douars/$region.json" \
+              -o "/tmp/transitlab-douars/$region.json"
+          done
+          curl -fLsS --connect-timeout 20 --max-time 180 --retry 3 --retry-all-errors --retry-delay 2 \
+            "$SOURCE_BASE/api/data/douar-places.json" \
+            -o /tmp/transitlab-douar-places.json
+          python tools/build-douar-map-layer.py \
+            --input-dir /tmp/transitlab-douars \
+            --places /tmp/transitlab-douar-places.json \
+            --output-dir assets/douars \
+            --index assets/douars-index.json \
+            --report reports/douars-coverage.md \
+            --source-commit "$SOURCE_COMMIT"
+
       - name: Convert validated data to site format
         run: |
           python tools/convert-multi-source-to-site-format.py \
@@ -378,7 +403,7 @@ jobs:
           if count != 1:
               raise SystemExit("Impossible de synchroniser la version de l'index dans map-app.js.")
 
-          cache_version = "maroc-v31-" + time.strftime("%Y%m%d", time.gmtime())
+          cache_version = "maroc-v32-" + time.strftime("%Y%m%d", time.gmtime())
           app = re.sub(r"maroc-v\d+-\d{8}", cache_version, app)
           app_path.write_text(app, encoding="utf-8")
 
@@ -440,6 +465,34 @@ jobs:
               "limitation": "Poste Maroc ne fournit pas de contours. Les entrées OSM supplémentaires sont des entités cartographiées, pas des limites administratives officielles. Les entrées non localisées restent sans géométrie ; aucune limite n'est inventée.",
           })
 
+          douar_index = json.loads(Path("assets/douars-index.json").read_text(encoding="utf-8"))
+          app, douar_version_count = re.subn(
+              r"DOUAR_DATA_VERSION='[^']+'",
+              "DOUAR_DATA_VERSION='" + str(douar_index["version"]) + "'",
+              app, count=1
+          )
+          if douar_version_count != 1:
+              raise SystemExit("Impossible de synchroniser la version du jeu des douars dans map-app.js.")
+          app_path.write_text(app, encoding="utf-8")
+          douar_layer = catalog.setdefault("layers", {}).setdefault("ruralDouars", {})
+          douar_layer.update({
+              "url": "assets/douars-index.json",
+              "features": int(douar_index.get("features", 0)),
+              "locatedPoints": int(douar_index.get("locatedPoints", 0)),
+              "unlocatedFeatures": int(douar_index.get("unlocatedFeatures", 0)),
+              "population": int(douar_index.get("population", 0)),
+              "households": int(douar_index.get("households", 0)),
+              "communes": int(douar_index.get("communes", 0)),
+              "regions": len(douar_index.get("regions", [])),
+              "bytesCompressed": int(douar_index.get("bytesCompressed", 0)),
+              "source": "HCP RGPH 2024; GeoNames and OpenStreetMap for matched point locations",
+              "sourceDate": "HCP RGPH 2024; upstream matching snapshot pinned by commit",
+              "license": "HCP CC BY 4.0; GeoNames CC BY 4.0; OSM ODbL 1.0",
+              "loading": "Points sourcés de douars ruraux chargés à la demande à partir du zoom 8; aucune frontière n'est inventée.",
+              "method": "Appariement conservateur des codes HCP aux lieux GeoNames/OSM; les correspondances et leur méthode sont conservées par enregistrement.",
+              "limitation": "Les douars ruraux sont distincts des quartiers urbains. Un point indique un lieu, pas son contour; les entrées sans localisation restent sans géométrie.",
+              "upstreamCommit": douar_index["upstream"]["commit"],
+          })
           catalog["version"] = cache_version
           catalog_path.write_text(
               json.dumps(catalog, ensure_ascii=False, indent=2) + "\n",
@@ -521,11 +574,80 @@ jobs:
           print(f"Répertoire validé : {len(features)} entrées dont {postal_count} postales + {osm_count} OSM supplémentaires ; {counts['mapped_boundary']} contours, {counts['mapped_point']} points, {counts['unlocated']} sans géométrie.")
           PY
 
+      - name: Validate HCP douar data and source provenance
+        run: |
+          python - <<'PY'
+          import gzip
+          import json
+          import math
+          from pathlib import Path
+
+          index = json.loads(Path("assets/douars-index.json").read_text(encoding="utf-8"))
+          catalog = json.loads(Path("assets/data-catalog.json").read_text(encoding="utf-8"))
+          app = Path("assets/map-app.js").read_text(encoding="utf-8")
+          regions = index.get("regions", [])
+          total = sum(int(region.get("count", 0)) for region in regions)
+          point_total = 0
+          codes = set()
+          for region in regions:
+              path = Path(region["url"])
+              if not path.is_file():
+                  raise SystemExit(f"Chunk régional absent : {path}")
+              with gzip.open(path, "rt", encoding="utf-8") as stream:
+                  collection = json.load(stream)
+              features = collection.get("features", [])
+              if len(features) != region["count"]:
+                  raise SystemExit(f"Nombre de douars incohérent pour {region['code']}.")
+              point_count = 0
+              for feature in features:
+                  props = feature.get("properties") or {}
+                  code = str(props.get("code") or "")
+                  if not code or code in codes:
+                      raise SystemExit(f"Code HCP absent ou en doublon : {code}")
+                  codes.add(code)
+                  if props.get("source") != "hcp_rgph_2024_douar":
+                      raise SystemExit(f"Provenance HCP absente pour le douar {code}.")
+                  geometry = feature.get("geometry")
+                  if geometry is None:
+                      if props.get("geometryStatus") != "unlocated":
+                          raise SystemExit(f"Statut incohérent pour le douar non localisé {code}.")
+                      continue
+                  if geometry.get("type") != "Point" or len(geometry.get("coordinates", [])) != 2:
+                      raise SystemExit(f"Une géométrie de douar doit être un point uniquement : {code}.")
+                  lon, lat = geometry["coordinates"]
+                  if not all(math.isfinite(float(value)) for value in (lon, lat)):
+                      raise SystemExit(f"Coordonnées invalides pour le douar {code}.")
+                  if props.get("geometryStatus") != "mapped_point" or props.get("locationSource") not in {"osm", "geonames"}:
+                      raise SystemExit(f"Provenance du point absente pour le douar {code}.")
+                  point_count += 1
+              if point_count != region["pointCount"]:
+                  raise SystemExit(f"Compteur de points incohérent pour la région {region['code']}.")
+              point_total += point_count
+
+          if total != index.get("features") or total < 30000:
+              raise SystemExit(f"Catalogue HCP incomplet : {total} douars.")
+          if point_total != index.get("locatedPoints") or point_total < 10000:
+              raise SystemExit(f"Couverture de points insuffisante ou incohérente : {point_total}.")
+          if index.get("unlocatedFeatures") != total - point_total:
+              raise SystemExit("Les entrées sans localisation ne correspondent pas aux données.")
+          if len(regions) != 12 or len(codes) != total or index.get("communes", 0) < 1000:
+              raise SystemExit("Couverture nationale ou unicité des codes HCP invalide.")
+          layer = catalog.get("layers", {}).get("ruralDouars", {})
+          if layer.get("features") != total or layer.get("locatedPoints") != point_total:
+              raise SystemExit("Catalogue et index des douars sont désynchronisés.")
+          if f"DOUAR_DATA_VERSION='{index['version']}'" not in app:
+              raise SystemExit("Version des données de douars désynchronisée du moteur cartographique.")
+          print(
+              f"Douars validés : {total} unités HCP, {point_total} points sourcés, "
+              f"{index['unlocatedFeatures']} sans localisation, {index['communes']} communes."
+          )
+          PY
+
       - name: Propose the validated data for review
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          git add assets/neighborhood-boundaries/ assets/neighborhood-boundaries-index.json assets/neighborhood-directory/ assets/neighborhood-directory-index.json assets/data-catalog.json assets/map-app.js assets/map-boot.js carte-interactive-maroc.html sw.js reports/
+          git add assets/neighborhood-boundaries/ assets/neighborhood-boundaries-index.json assets/neighborhood-directory/ assets/neighborhood-directory-index.json assets/douars/ assets/douars-index.json assets/data-catalog.json assets/map-app.js assets/map-boot.js carte-interactive-maroc.html sw.js reports/
           if git diff --cached --quiet; then
             echo "Aucune différence : aucune pull request nécessaire."
             exit 0
@@ -544,6 +666,7 @@ jobs:
           - Pipeline multi-sources exécuté avec les tests de régression.
           - La sortie a passé les contrôles de volume, géométrie et couverture.
           - Le catalogue est synchronisé avec l'index régional.
+          - Les 33 189 enregistrements de douars HCP et leurs points OSM/GeoNames sont validés séparément des quartiers urbains.
 
           **À vérifier avant fusion :** comparer reports/neighborhood-coverage.md et inspecter visuellement au moins Casablanca, Rabat, Marrakech, Fès, Tanger, Agadir, Oujda, Laâyoune, Béni Mellal et Errachidia. Les secteurs estimatifs ne sont pas des limites officielles.
           EOF
