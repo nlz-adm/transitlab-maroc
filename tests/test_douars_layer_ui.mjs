@@ -28,7 +28,7 @@ test('national HCP douar index is accepted only when counts reconcile', () => {
   const index = consistentFixture();
   assert.equal(validateDouarIndex(index, index.version), index);
   const wrongVersion = { ...index, version: 'old' };
-  assert.throws(() => validateDouarIndex(wrongVersion, index.version), /version/);
+  assert.throws(() => validateDouarIndex(wrongVersion, index.version), /Version/);
   const badCounts = { ...index, locatedPoints: 14000 };
   assert.throws(() => validateDouarIndex(badCounts, index.version), /Compteurs/);
 });
