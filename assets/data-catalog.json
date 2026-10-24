@@ -51,12 +51,12 @@
       "bytesCompressed": 1771012,
       "loading": "Quartiers cartographiés et îlots urbains estimés à partir du réseau routier et des empreintes de bâtiments OSM, visibles au zoom 11+.",
       "geometrySources": [
-        "Contours cartographiés OpenStreetMap (place=neighbourhood/suburb/quarter)",
-        "Secteurs indicatifs estimés à partir de lieux habités OpenStreetMap et des contours communaux"
+        "Contours de quartiers réellement cartographiés : OpenStreetMap et polygones de quartiers Overture, conservés comme sources distinctes.",
+        "Îlots urbains estimés à partir des rues locales OpenStreetMap et des empreintes de bâtiments ; polygones fermés par le réseau routier, filtrés par taille et découpés aux limites communales."
       ],
-      "method": "335 contours cartographiés + 10000 îlots urbains estimés.",
+      "method": "335 contours cartographiés + 10000 îlots urbains estimés, sélectionnés de manière déterministe et répartis par tuiles à travers les zones où des îlots valides sont cartographiés.",
       "license": "ODbL 1.0 ; CC-BY 4.0",
-      "limitation": "Les îlots urbains suivent les rues et les empreintes bâties, mais ne sont pas des quartiers officiels. Les zones où OSM est incomplet peuvent rester sans secteur.",
+      "limitation": "Les îlots estimés reproduisent la morphologie des blocs routiers et la présence bâtie, mais ne sont ni des quartiers officiels ni des limites administratives. La couverture dépend de la complétude des rues et empreintes de bâtiments OSM ; les zones non couvertes ne sont pas remplies artificiellement.",
       "urbanBlockFeatures": 10000
     },
     "basemap": {
