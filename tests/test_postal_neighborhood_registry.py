@@ -180,6 +180,78 @@ class PostalNeighborhoodRegistryTests(unittest.TestCase):
         self.assertEqual(candidates[0]["cityKey"], "rabat")
         self.assertEqual(candidates[0]["communeCode"], "MA001")
 
+    def test_mapped_overture_polygons_are_read_with_source_provenance(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "mapped.geojson"
+            path.write_text(json.dumps({
+                "type": "FeatureCollection",
+                "features": [
+                    {
+                        "type": "Feature",
+                        "id": "ov:area:matched",
+                        "properties": {
+                            "name": "Gauthier",
+                            "name_fr": "Gauthier",
+                            "name_ar": "غوتييه",
+                            "source": "overture",
+                            "sourceDetail": "Overture Maps division_area",
+                            "sourceUrl": "https://docs.overturemaps.org/guides/divisions/",
+                            "sourceLicense": "CC-BY-4.0",
+                            "sourceId": "ov:area:matched",
+                            "sourceSubtype": "neighborhood",
+                            "commune_name": "CASABLANCA",
+                            "commune_id": "06.141.01.0",
+                            "boundaryKind": "mapped",
+                            "estimated": False,
+                        },
+                        "geometry": mapping(box(-7.63, 33.58, -7.62, 33.59)),
+                    },
+                    {
+                        "type": "Feature",
+                        "id": "ov:area:new",
+                        "properties": {
+                            "name": "Quartier Overture Inédit",
+                            "name_fr": "Quartier Overture Inédit",
+                            "source": "overture",
+                            "sourceDetail": "Overture Maps division_area",
+                            "sourceUrl": "https://docs.overturemaps.org/guides/divisions/",
+                            "sourceLicense": "CC-BY-4.0",
+                            "sourceId": "ov:area:new",
+                            "sourceSubtype": "neighborhood",
+                            "commune_name": "CASABLANCA",
+                            "commune_id": "06.141.01.0",
+                            "boundaryKind": "mapped",
+                            "estimated": False,
+                        },
+                        "geometry": mapping(box(-7.61, 33.58, -7.60, 33.59)),
+                    },
+                ],
+            }), encoding="utf-8")
+            candidates = MODULE.read_mapped_boundary_candidates(path)
+
+        self.assertEqual(len(candidates), 2)
+        self.assertTrue(all(candidate["source"] == "overture" for candidate in candidates))
+        self.assertTrue(all(candidate["geometry"].geom_type == "Polygon" for candidate in candidates))
+        records = [{
+            "sourceId": "postal:1", "sourceRow": "sheet:2",
+            "city": "CASABLANCA", "cityKey": "casablanca",
+            "name": "HAY GAUTHIER", "nameKey": "gauthier", "postalCode": "20000",
+        }]
+        features, totals, city_stats, duplicates = MODULE.build_registry(
+            records, candidates, include_unmatched_mapped=True
+        )
+        postal = features[0]
+        overtime = [feature for feature in features if feature["properties"].get("source") == "overture"]
+        self.assertEqual(postal["properties"]["geometryStatus"], "mapped_boundary")
+        self.assertEqual(postal["properties"]["geometrySource"], "overture")
+        self.assertEqual(postal["geometry"]["type"], "Polygon")
+        self.assertEqual(len(overtime), 1)
+        self.assertEqual(overtime[0]["properties"]["source"], "overture")
+        self.assertEqual(overtime[0]["properties"]["geometrySource"], "overture")
+        self.assertEqual(overtime[0]["properties"]["sourceId"], "ov:area:new")
+        self.assertEqual(overtime[0]["properties"]["sourceLicense"], "CC-BY-4.0")
+        self.assertEqual(totals["mapped_boundary"], 2)
+
     def test_output_requires_at_least_ten_thousand_source_rows(self):
         with self.assertRaisesRegex(ValueError, "10000 required"):
             MODULE.write_outputs([], Counter(), defaultdict(Counter), 0,
