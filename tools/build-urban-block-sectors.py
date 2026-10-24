@@ -299,6 +299,7 @@ def main() -> int:
                         help="Maximum number of sectors to emit; 0 disables the cap")
     parser.add_argument("--tile-size", type=float, default=TILE_DEGREES)
     parser.add_argument("--min-buildings", type=int, default=MIN_BUILDINGS)
+    parser.add_argument("--all-output", type=Path, help="Optional GeoJSON output containing all accepted blocks before sampling")
     args = parser.parse_args()
     TILE_DEGREES = args.tile_size
     if args.target_max < 0 or (args.target_max and args.target_max < args.target_min):
@@ -437,6 +438,18 @@ def main() -> int:
         str((feature.get("properties") or {}).get("_samplingTile") or "")
         for feature in output
     })
+    if args.all_output:
+        if candidate_count < args.target_min:
+            raise SystemExit(
+                f"Only {candidate_count} candidate blocks available; {args.target_min} required. "
+                "Refusing to write incomplete candidates for neighbourhood grouping."
+            )
+        args.all_output.parent.mkdir(parents=True, exist_ok=True)
+        args.all_output.write_text(
+            json.dumps({"type": "FeatureCollection", "features": output}, ensure_ascii=False, separators=(",", ":")),
+            encoding="utf-8",
+        )
+        print(f"All accepted road-block candidates saved: {candidate_count} to {args.all_output}")
     output = sample_features_by_tile(output, args.target_max)
     selected_tile_count = len({
         str((feature.get("properties") or {}).get("_samplingTile") or "")
