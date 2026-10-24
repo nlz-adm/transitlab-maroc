@@ -1,0 +1,15 @@
+{
+  "version": "morocco-postal-neighborhood-directory-20261024",
+  "generatedAt": "2026-10-24T09:50:35+00:00",
+  "source": "Barid Al Maghrib · Codes postaux des quartiers",
+  "sourceDate": "2018-09",
+  "sourceUrl": "https://data.gov.ma/data/dataset/e0093dbf-38f0-440a-91da-ad3f0243f378/resource/7f257007-d512-4a2e-9f7f-ba29ee4ac8b1/download/codes-postaux-quartiers-2018.xlsx",
+  "license": "ODbL-1.0",
+  "features": 10026,
+  "mappedBoundaryFeatures": 14,
+  "mappedPointFeatures": 633,
+  "unlocatedFeatures": 9379,
+  "duplicateCityNeighborhoodNames": 458,
+  "url": "assets/neighborhood-directory/postal-neighborhoods.geojson.gz",
+  "bytesCompressed": 347980
+}

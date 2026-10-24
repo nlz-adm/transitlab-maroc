@@ -4,10 +4,10 @@
 - Source buildings: OpenStreetMap building-footprint polygons.
 - Method: polygonize noded road segments; retain only enclosed polygons with building evidence; clip to commune boundaries.
 - Semantics: estimated urban blocks, not official or named neighbourhood boundaries.
-- Road segments loaded: 7768705
-- Building footprints loaded: 1504252
+- Road segments loaded: 7770308
+- Building footprints loaded: 1504340
 - Active building tiles: 1351
-- Candidate sectors before sampling: 53046
+- Candidate sectors before sampling: 53055
 - Selected sectors after spatial sampling: 10000
 - Target minimum: 10000
 - Target maximum: 10000
@@ -15,7 +15,7 @@
 - Tiles represented in the sample: 633
 - Sampling: deterministic round-robin across tile buckets, tile order hashed by SHA1, candidates ordered by stable feature ID
 - Communes represented after sampling: 548
-- Road class counts: {'tertiary': 1052050, 'secondary': 338043, 'primary': 295741, 'residential': 2170119, 'service': 506184, 'unclassified': 3319159, 'pedestrian': 17815, 'living_street': 69300, 'road': 294}
+- Road class counts: {'tertiary': 1052058, 'secondary': 338043, 'primary': 295742, 'residential': 2170987, 'service': 506315, 'unclassified': 3319754, 'pedestrian': 17815, 'living_street': 69300, 'road': 294}
 
 ## Highest coverage communes
 
@@ -23,8 +23,8 @@
 - 06.141.01.0: 189
 - 04.421.01.0: 151
 - 02.411.01.23: 149
-- 07.431.01.03: 149
-- 01.511.01.0: 136
+- 07.431.01.03: 148
+- 01.511.01.0: 137
 - 11.321.01.03: 115
 - 07.161.01.01: 113
 - 07.161.03.05: 102

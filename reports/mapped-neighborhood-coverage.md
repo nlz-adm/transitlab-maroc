@@ -4,7 +4,7 @@
 - Commune assignment: maximum polygon overlap, then intersection-clipping to that commune.
 - Input source polygons: 335
 - Accepted mapped polygons: 335
-- Polygons clipped to commune: 84
+- Polygons clipped to commune: 81
 - Rejected as estimated: 0
 - Rejected (missing name): 0
 - Rejected (invalid/non-polygon geometry): 0

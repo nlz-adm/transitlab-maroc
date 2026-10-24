@@ -1,13 +1,13 @@
 # Overture neighbourhood boundary import
 
-- Retrieved at UTC: 2026-10-23T22:35:08+00:00
+- Retrieved at UTC: 2026-10-24T09:43:06+00:00
 - Overture source: https://docs.overturemaps.org/guides/divisions/
 - Licence: https://opendatacommons.org/licenses/odbl/1-0/
 - Spatial filter: Moroccan commune-boundary union, bbox (-17.134627000000002, 20.7399, -0.968429, 35.952454)
 - Raw division_area features returned: 3259
 - Accepted mapped neighborhood polygons: 289
-- Net new polygons after deduplication: 252
-- Existing mapped polygons preserved or refreshed: 83
+- Net new polygons after deduplication: 0
+- Existing mapped polygons preserved or refreshed: 335
 - Combined seeds passed to pipeline: 335
 
 ## Rejection counts
@@ -22,9 +22,9 @@
 
 - Attempt 1: exit=0; stdout=; stderr=
 Downloading: 0 rows [00:00, ? rows/s]
-Downloading: 597 rows [00:01, 425.47 rows/s]
-Downloading: 1967 rows [00:01, 1570.00 rows/s]
-Downloading: 2983 rows [00:01, 2344.89 rows/s]
-Downloading: 3259 rows [00:01, 1709.01 rows/s]
-State saved to /tmp/transitlab-overture-gx68lg7e/division-area.geojson.state
+Downloading: 597 rows [00:02, 253.19 rows/s]
+Downloading: 1967 rows [00:02, 997.61 rows/s]
+Downloading: 2983 rows [00:02, 1593.34 rows/s]
+Downloading: 3259 rows [00:02, 1144.86 rows/s]
+State saved to /tmp/transitlab-overture-iezy4o1o/division-area.geojson.state
 

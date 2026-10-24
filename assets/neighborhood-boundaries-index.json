@@ -1,6 +1,6 @@
 {
-  "version": "morocco-neighborhood-boundaries-2026-10-23-multi-source",
-  "generatedAt": "2026-10-23",
+  "version": "morocco-neighborhood-boundaries-2026-10-24-multi-source",
+  "generatedAt": "2026-10-24",
   "regions": [
     {
       "code": "01",
@@ -16,7 +16,7 @@
       "estimated": 0,
       "urbanBlocks": 1131,
       "communes": 67,
-      "bytesCompressed": 231260
+      "bytesCompressed": 231543
     },
     {
       "code": "02",
@@ -32,7 +32,7 @@
       "estimated": 0,
       "urbanBlocks": 1595,
       "communes": 80,
-      "bytesCompressed": 223226
+      "bytesCompressed": 223228
     },
     {
       "code": "03",
@@ -64,7 +64,7 @@
       "estimated": 0,
       "urbanBlocks": 767,
       "communes": 38,
-      "bytesCompressed": 148937
+      "bytesCompressed": 148941
     },
     {
       "code": "05",
@@ -80,7 +80,7 @@
       "estimated": 0,
       "urbanBlocks": 156,
       "communes": 20,
-      "bytesCompressed": 21061
+      "bytesCompressed": 21065
     },
     {
       "code": "06",
@@ -96,7 +96,7 @@
       "estimated": 0,
       "urbanBlocks": 617,
       "communes": 33,
-      "bytesCompressed": 142417
+      "bytesCompressed": 142451
     },
     {
       "code": "07",
@@ -112,7 +112,7 @@
       "estimated": 0,
       "urbanBlocks": 2158,
       "communes": 100,
-      "bytesCompressed": 434824
+      "bytesCompressed": 435225
     },
     {
       "code": "08",
@@ -128,7 +128,7 @@
       "estimated": 0,
       "urbanBlocks": 877,
       "communes": 52,
-      "bytesCompressed": 122602
+      "bytesCompressed": 122607
     },
     {
       "code": "09",
@@ -144,7 +144,7 @@
       "estimated": 0,
       "urbanBlocks": 1391,
       "communes": 96,
-      "bytesCompressed": 296647
+      "bytesCompressed": 296756
     },
     {
       "code": "10",
