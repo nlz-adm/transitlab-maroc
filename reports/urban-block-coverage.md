@@ -1,0 +1,51 @@
+# Urban block sector generation
+
+- Source roads: OpenStreetMap Geofabrik Morocco PBF, filtered to local/urban road classes.
+- Source buildings: OpenStreetMap building-footprint polygons.
+- Method: polygonize noded road segments; retain only enclosed polygons with building evidence; clip to commune boundaries.
+- Semantics: estimated urban blocks, not official or named neighbourhood boundaries.
+- Road segments loaded: 7768705
+- Building footprints loaded: 1504252
+- Active building tiles: 1351
+- Candidate sectors before sampling: 53046
+- Selected sectors after spatial sampling: 10000
+- Target minimum: 10000
+- Target maximum: 10000
+- Active tiles with candidates: 633
+- Tiles represented in the sample: 633
+- Sampling: deterministic round-robin across tile buckets, tile order hashed by SHA1, candidates ordered by stable feature ID
+- Communes represented after sampling: 548
+- Road class counts: {'tertiary': 1052050, 'secondary': 338043, 'primary': 295741, 'residential': 2170119, 'service': 506184, 'unclassified': 3319159, 'pedestrian': 17815, 'living_street': 69300, 'road': 294}
+
+## Highest coverage communes
+
+- 07.351.01.0: 207
+- 06.141.01.0: 189
+- 04.421.01.0: 151
+- 02.411.01.23: 149
+- 07.431.01.03: 149
+- 01.511.01.0: 136
+- 11.321.01.03: 115
+- 07.161.01.01: 113
+- 07.161.03.05: 102
+- 07.161.07.07: 86
+- 06.181.01.03: 83
+- 07.161.03.09: 83
+- 07.351.05.05: 78
+- 02.167.01.03: 76
+- 10.261.03.11: 76
+- 10.521.01.01: 76
+- 08.577.01.05: 76
+- 09.001.01.01: 76
+- 02.113.01.09: 75
+- 02.381.01.01: 75
+- 06.461.01.15: 75
+- 08.401.01.07: 75
+- 09.541.01.13: 75
+- 04.281.01.01: 74
+- 02.113.01.07: 74
+- 03.061.01.01: 74
+- 08.201.11.07: 71
+- 02.381.01.03: 69
+- 04.281.07.01: 67
+- 07.161.07.11: 67

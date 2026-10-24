@@ -6,154 +6,212 @@
       "code": "01",
       "url": "assets/neighborhood-boundaries/01.geojson.gz",
       "bbox": [
-        -5.8716,
-        35.16294,
-        -3.85568,
-        35.76661
+        -6.1593651,
+        34.7935577,
+        -3.8140784,
+        35.912267
       ],
-      "count": 3,
-      "mapped": 3,
+      "count": 1153,
+      "mapped": 22,
       "estimated": 0,
-      "communes": 3,
-      "bytesCompressed": 764
+      "urbanBlocks": 1131,
+      "communes": 67,
+      "bytesCompressed": 231260
     },
     {
       "code": "02",
       "url": "assets/neighborhood-boundaries/02.geojson.gz",
       "bbox": [
-        -1.97976,
+        -3.8173193159497756,
         32.0852029,
         -1.2131964,
-        34.65502
+        35.3586227
       ],
-      "count": 20,
-      "mapped": 20,
+      "count": 1646,
+      "mapped": 51,
       "estimated": 0,
-      "communes": 3,
-      "bytesCompressed": 7522
+      "urbanBlocks": 1595,
+      "communes": 80,
+      "bytesCompressed": 223226
     },
     {
       "code": "03",
       "url": "assets/neighborhood-boundaries/03.geojson.gz",
       "bbox": [
-        -5.5664334,
-        33.37551,
-        -3.97566,
-        34.054254
+        -5.5904303,
+        33.0039937,
+        -3.794684,
+        34.7640161
       ],
-      "count": 5,
-      "mapped": 5,
+      "count": 501,
+      "mapped": 20,
       "estimated": 0,
-      "communes": 4,
-      "bytesCompressed": 1592
+      "urbanBlocks": 481,
+      "communes": 39,
+      "bytesCompressed": 74237
     },
     {
       "code": "04",
       "url": "assets/neighborhood-boundaries/04.geojson.gz",
       "bbox": [
-        -6.90615,
-        33.82623,
-        -6.0773,
-        34.26996
+        -7.0803724,
+        33.4205161,
+        -5.4966673,
+        34.9478112
       ],
-      "count": 13,
-      "mapped": 13,
+      "count": 805,
+      "mapped": 38,
       "estimated": 0,
-      "communes": 6,
-      "bytesCompressed": 2169
+      "urbanBlocks": 767,
+      "communes": 38,
+      "bytesCompressed": 148937
     },
     {
       "code": "05",
       "url": "assets/neighborhood-boundaries/05.geojson.gz",
       "bbox": [
-        -7.00316,
-        31.73307,
-        -6.250459,
-        32.6133603
+        -7.0055914,
+        31.6142407,
+        -5.6611323,
+        32.9681021
       ],
-      "count": 13,
-      "mapped": 13,
+      "count": 181,
+      "mapped": 25,
       "estimated": 0,
-      "communes": 3,
-      "bytesCompressed": 2075
+      "urbanBlocks": 156,
+      "communes": 20,
+      "bytesCompressed": 21061
     },
     {
       "code": "06",
       "url": "assets/neighborhood-boundaries/06.geojson.gz",
       "bbox": [
-        -8.36233,
-        33.26924,
-        -7.51984,
-        33.58792
+        -8.8844379,
+        32.5776613,
+        -7.1141767,
+        33.8146535
       ],
-      "count": 12,
-      "mapped": 12,
+      "count": 698,
+      "mapped": 81,
       "estimated": 0,
-      "communes": 4,
-      "bytesCompressed": 1582
+      "urbanBlocks": 617,
+      "communes": 33,
+      "bytesCompressed": 142417
     },
     {
       "code": "07",
       "url": "assets/neighborhood-boundaries/07.geojson.gz",
       "bbox": [
-        -9.7727208,
-        31.5108878,
-        -7.98468,
-        32.32878
+        -9.8256342,
+        30.8629229,
+        -7.2619776,
+        32.4455097
       ],
-      "count": 10,
-      "mapped": 10,
+      "count": 2181,
+      "mapped": 23,
       "estimated": 0,
-      "communes": 5,
-      "bytesCompressed": 2392
+      "urbanBlocks": 2158,
+      "communes": 100,
+      "bytesCompressed": 434824
     },
     {
       "code": "08",
       "url": "assets/neighborhood-boundaries/08.geojson.gz",
       "bbox": [
-        -6.9107112,
-        30.9247394,
-        -5.31521,
-        31.63283
+        -7.6672821,
+        29.8248817,
+        -3.6041171,
+        32.8293812
       ],
-      "count": 5,
-      "mapped": 5,
+      "count": 885,
+      "mapped": 8,
       "estimated": 0,
-      "communes": 3,
-      "bytesCompressed": 980
+      "urbanBlocks": 877,
+      "communes": 52,
+      "bytesCompressed": 122602
     },
     {
       "code": "09",
       "url": "assets/neighborhood-boundaries/09.geojson.gz",
       "bbox": [
-        -8.8748965,
-        30.47164,
-        -7.9142,
-        30.53214
+        -10.010086739323214,
+        29.0067058,
+        -6.8651217,
+        31.0439103
       ],
-      "count": 2,
-      "mapped": 2,
+      "count": 1457,
+      "mapped": 66,
       "estimated": 0,
-      "communes": 2,
-      "bytesCompressed": 1465
+      "urbanBlocks": 1391,
+      "communes": 96,
+      "bytesCompressed": 296647
+    },
+    {
+      "code": "10",
+      "url": "assets/neighborhood-boundaries/10.geojson.gz",
+      "bbox": [
+        -11.3500291,
+        27.7219397,
+        -9.1920684,
+        29.5809164
+      ],
+      "count": 381,
+      "mapped": 0,
+      "estimated": 0,
+      "urbanBlocks": 381,
+      "communes": 17,
+      "bytesCompressed": 38168
+    },
+    {
+      "code": "11",
+      "url": "assets/neighborhood-boundaries/11.geojson.gz",
+      "bbox": [
+        -14.8753382,
+        24.6640955,
+        -9.5732327,
+        28.0979154
+      ],
+      "count": 317,
+      "mapped": 1,
+      "estimated": 0,
+      "urbanBlocks": 316,
+      "communes": 13,
+      "bytesCompressed": 26500
+    },
+    {
+      "code": "12",
+      "url": "assets/neighborhood-boundaries/12.geojson.gz",
+      "bbox": [
+        -16.9607164,
+        21.3617283,
+        -14.3115887,
+        24.413427
+      ],
+      "count": 130,
+      "mapped": 0,
+      "estimated": 0,
+      "urbanBlocks": 130,
+      "communes": 7,
+      "bytesCompressed": 11133
     }
   ],
-  "features": 83,
-  "mappedFeatures": 83,
+  "features": 10335,
+  "mappedFeatures": 335,
   "estimatedFeatures": 0,
-  "communesWithFeatures": 33,
+  "urbanBlockFeatures": 10000,
+  "communesWithFeatures": 562,
   "communesTotal": 1502,
-  "coverage": 2.2,
+  "coverage": 37.4,
   "sources": {
     "mappedGeometry": "Polygones OpenStreetMap (place=neighbourhood/suburb/quarter)",
-    "estimatedGeometry": "Cellules Voronoi multi-sources (Overture + OSM + GeoNames + Poste Maroc)",
-    "gridGeometry": "Secteurs réguliers découpés par le contour communal",
+    "estimatedGeometry": "Îlots urbains estimés à partir de polygones fermés par des rues OSM et vérifiés par des empreintes de bâtiments",
+    "gridGeometry": "Aucune cellule Voronoï synthétique publiée",
     "communeContext": "morocco-communes 1.10.0 (HCP RGPH 2024)"
   },
   "licenses": [
     "ODbL 1.0",
     "CC-BY 4.0"
   ],
-  "limitations": "Les polygones mappés proviennent d'OpenStreetMap. Les estimations combinent 6 sources ouvertes (Overture, OSM, GeoNames, Poste Maroc, Kontur/HDX, HCP) avec un score de confiance. Ce tracé n'est pas une limite officielle.",
+  "limitations": "Les quartiers cartographiés conservent leur géométrie source. Les îlots urbains estimés suivent des rues OSM et exigent des empreintes de bâtiments ; ils ne sont pas des quartiers officiels. La densité est estimée séparément à partir de Kontur/HDX.",
   "pipeline": "prepare-neighborhood-boundaries-multi-source.py"
 }

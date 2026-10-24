@@ -43,21 +43,21 @@
     },
     "neighborhoodBoundaries": {
       "url": "assets/neighborhood-boundaries-index.json",
-      "features": 83,
-      "mappedFeatures": 83,
+      "features": 10335,
+      "mappedFeatures": 335,
       "estimatedFeatures": 0,
-      "communesWithFeatures": 33,
-      "regions": 9,
-      "bytesCompressed": 20541,
-      "loading": "Quartiers cartographiés et, lorsque la couverture le permet, au moins 10000 îlots urbains estimés à partir des rues et empreintes de bâtiments OSM, visibles au zoom 11+.",
+      "communesWithFeatures": 562,
+      "regions": 12,
+      "bytesCompressed": 1771012,
+      "loading": "Quartiers cartographiés et îlots urbains estimés à partir du réseau routier et des empreintes de bâtiments OSM, visibles au zoom 11+.",
       "geometrySources": [
-        "Contours cartographiés OpenStreetMap (place=neighbourhood/suburb/quarter)",
-        "Secteurs indicatifs estimés à partir de lieux habités OpenStreetMap et des contours communaux"
+        "Contours de quartiers réellement cartographiés : OpenStreetMap et polygones de quartiers Overture, conservés comme sources distinctes.",
+        "Îlots urbains estimés à partir des rues locales OpenStreetMap et des empreintes de bâtiments ; polygones fermés par le réseau routier, filtrés par taille et découpés aux limites communales."
       ],
-      "method": "Contours cartographiés conservés ; îlots urbains générés par polygonisation du réseau routier et validation par empreintes de bâtiments, puis découpés aux limites communales.",
+      "method": "335 contours cartographiés + 10000 îlots urbains estimés, sélectionnés de manière déterministe et répartis par tuiles à travers les zones où des îlots valides sont cartographiés.",
       "license": "ODbL 1.0 ; CC-BY 4.0",
-      "limitation": "Les îlots estimés suivent la structure viaire mais ne sont pas des quartiers officiels ; seules les zones suffisamment cartographiées sont retenues.",
-      "urbanBlockFeatures": 0
+      "limitation": "Les îlots estimés reproduisent la morphologie des blocs routiers et la présence bâtie, mais ne sont ni des quartiers officiels ni des limites administratives. La couverture dépend de la complétude des rues et empreintes de bâtiments OSM ; les zones non couvertes ne sont pas remplies artificiellement.",
+      "urbanBlockFeatures": 10000
     },
     "basemap": {
       "url": "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
