@@ -139,6 +139,7 @@ def build_dataset(
     source_commit: str,
     min_features: int = 30000,
     min_points: int = 10000,
+    min_communes: int = 1000,
 ) -> dict:
     if not source_commit or len(source_commit) < 7:
         raise ValueError("A pinned upstream commit SHA is required for reproducibility")
@@ -244,8 +245,11 @@ def build_dataset(
         raise ValueError(f"Only {features_total} douars; minimum required is {min_features}")
     if points_total < min_points:
         raise ValueError(f"Only {points_total} matched points; minimum required is {min_points}")
-    if len(all_communes) < 1000:
-        raise ValueError(f"Only {len(all_communes)} communes represented; expected national rural coverage")
+    if len(all_communes) < min_communes:
+        raise ValueError(
+            f"Only {len(all_communes)} communes represented; minimum required is {min_communes} "
+            "(national production default: 1000)"
+        )
     if points_total != len(places):
         raise ValueError(f"Matched point accounting mismatch: {points_total} != {len(places)}")
 
