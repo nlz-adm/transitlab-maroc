@@ -419,7 +419,7 @@ class PublishedDataIntegrityTests(unittest.TestCase):
         self.assertIn("geometry == null", layer)
         self.assertIn("douars-layer.mjs", worker)
         self.assertIn("douars-index", worker)
-        self.assertRegex(worker, r"assets\\\\/douars\\\\/")
+        self.assertIn(r"\/assets\/douars\/", worker)
         douar_layer = catalog["layers"]["ruralDouars"]
         self.assertEqual(douar_layer["features"], index["features"])
         self.assertEqual(douar_layer["locatedPoints"], index["locatedPoints"])
