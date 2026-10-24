@@ -336,8 +336,9 @@ jobs:
           python tools/build-postal-neighborhood-registry.py \
             --postal-data "$POSTAL_FILE" \
             --osm-geojsonseq /tmp/morocco-neighborhoods.geojsonseq \
+            --mapped-boundaries assets/data/neighborhoods-estimated.geojson \
             --communes assets/data/division_area.geojson \
-            --include-unmatched-osm \
+            --include-unmatched-mapped \
             --output assets/neighborhood-directory/postal-neighborhoods.geojson.gz \
             --index assets/neighborhood-directory-index.json \
             --report reports/postal-neighborhood-coverage.md
@@ -378,7 +379,7 @@ jobs:
           if count != 1:
               raise SystemExit("Impossible de synchroniser la version de l'index dans map-app.js.")
 
-          cache_version = "maroc-v31-" + time.strftime("%Y%m%d", time.gmtime())
+          cache_version = "maroc-v32-" + time.strftime("%Y%m%d", time.gmtime())
           app = re.sub(r"maroc-v\d+-\d{8}", cache_version, app)
           app_path.write_text(app, encoding="utf-8")
 
@@ -428,16 +429,18 @@ jobs:
               "features": int(directory_index.get("features", 0)),
               "postalFeatures": int(directory_index.get("postalFeatures", 0)),
               "osmSupplementFeatures": int(directory_index.get("osmSupplementFeatures", 0)),
+              "overtureSupplementFeatures": int(directory_index.get("overtureSupplementFeatures", 0)),
+              "geometrySourceCounts": directory_index.get("geometrySourceCounts", {}),
               "mappedBoundaryFeatures": int(directory_index.get("mappedBoundaryFeatures", 0)),
               "mappedPointFeatures": int(directory_index.get("mappedPointFeatures", 0)),
               "unlocatedFeatures": int(directory_index.get("unlocatedFeatures", 0)),
               "bytesCompressed": int(directory_index.get("bytesCompressed", 0)),
-              "source": "Barid Al Maghrib 2018 + OpenStreetMap",
-              "sourceDate": "Poste Maroc 2018-09 ; OSM au moment du rafraîchissement",
-              "license": "ODbL 1.0",
-              "loading": "Répertoire consultable des quartiers postaux et des entités OSM nommées qui ne figurent pas au catalogue postal.",
-              "method": "Correspondance stricte des lignes postales et de leurs géométries, puis ajout séparé des noms et géométries OSM supplémentaires. Les frontières restent des polygones cartographiés ; les points ne sont pas des contours.",
-              "limitation": "Poste Maroc ne fournit pas de contours. Les entrées OSM supplémentaires sont des entités cartographiées, pas des limites administratives officielles. Les entrées non localisées restent sans géométrie ; aucune limite n'est inventée.",
+              "source": "Barid Al Maghrib 2018 + OpenStreetMap + Overture Maps",
+              "sourceDate": "Poste Maroc 2018-09 ; OSM et Overture au moment du rafraîchissement",
+              "license": "ODbL 1.0 ; licences et provenance conservées par entité",
+              "loading": "Répertoire consultable des quartiers postaux, complété par les géométries cartographiées OSM et Overture qui ne sont pas déjà appariées à une ligne postale.",
+              "method": "Correspondance stricte des lignes postales et de leurs géométries, puis ajout séparé des polygones cartographiés OSM/Overture et des lieux OSM nommés. Les frontières restent des polygones cartographiés ; les points ne sont pas des contours.",
+              "limitation": "Poste Maroc ne fournit pas de contours. Les polygones OSM/Overture sont des entités cartographiées, pas nécessairement des limites administratives officielles. Les points ne sont pas des frontières. Les entrées non localisées restent sans géométrie ; aucune limite n'est inventée.",
           })
 
           catalog["version"] = cache_version
@@ -509,7 +512,12 @@ jobs:
                   raise SystemExit("Une entrée non localisée ne doit pas recevoir de géométrie inventée.")
           postal_count = sum(1 for feature in features if (feature.get("properties") or {}).get("source") == "poste_maroc_2018")
           osm_count = sum(1 for feature in features if (feature.get("properties") or {}).get("source") == "openstreetmap")
-          if postal_count != index.get("postalFeatures") or osm_count != index.get("osmSupplementFeatures"):
+          overture_count = sum(1 for feature in features if (feature.get("properties") or {}).get("source") == "overture")
+          if (
+              postal_count != index.get("postalFeatures")
+              or osm_count != index.get("osmSupplementFeatures")
+              or overture_count != index.get("overtureSupplementFeatures")
+          ):
               raise SystemExit("Les compteurs par source ne correspondent pas aux données.")
           expected = {
               "mappedBoundaryFeatures": counts["mapped_boundary"],

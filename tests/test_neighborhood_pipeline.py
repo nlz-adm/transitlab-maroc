@@ -390,8 +390,11 @@ class PublishedDataIntegrityTests(unittest.TestCase):
         self.assertIn("new DecompressionStream('gzip')", app)
         self.assertIn("geometryStatus", app)
         self.assertIn("aucune position ni limite n’est inventée", app)
+        self.assertIn("overtureSupplementFeatures", app)
+        self.assertIn("--mapped-boundaries assets/data/neighborhoods-estimated.geojson", workflow)
+        self.assertIn("Overture Maps", workflow)
         self.assertIn("NEIGHBORHOOD_DIRECTORY_VERSION='[^']+'", workflow)
-        self.assertIn('cache_version = "maroc-v31-"', workflow)
+        self.assertIn('cache_version = "maroc-v32-"', workflow)
 
     def test_pwa_manifest_icons_and_service_worker_precache_exist(self):
         import re
