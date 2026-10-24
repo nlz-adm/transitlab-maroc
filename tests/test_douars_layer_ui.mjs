@@ -2,35 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { validateDouarIndex, isDouarPointVisible } from '../assets/douars-layer.mjs';
 
-function fixture() {
-  return {
-    version: 'morocco-hcp-douars-2024-7204f75e503c',
-    features: 33189,
-    locatedPoints: 14860,
-    unlocatedFeatures: 18329,
-    regions: Array.from({ length: 12 }, (_, index) => {
-      const code = String(index + 1).padStart(2, '0');
-      return {
-        code,
-        url: 'assets/douars/' + code + '.geojson.gz',
-        count: index === 0 ? 33178 : 1,
-        pointCount: index === 0 ? 14849 : 1,
-        unlocatedCount: index === 0 ? 18329 : 0,
-      };
-    }).map((region, index) => index === 0 ? region : {
-      ...region,
-      count: index === 1 ? 1 : 0,
-      pointCount: index === 1 ? 1 : 0,
-      unlocatedCount: index === 1 ? 0 : 0,
-    }),
-  };
-}
-
 function consistentFixture() {
   const regions = Array.from({ length: 12 }, (_, index) => {
     const code = String(index + 1).padStart(2, '0');
-    const count = index === 0 ? 33178 : index === 1 ? 11 : 0;
-    const points = index === 0 ? 14849 : index === 1 ? 11 : 0;
+    const count = index === 0 ? 33178 : 1;
+    const points = index === 0 ? 14850 : index === 11 ? 0 : 1;
     return {
       code,
       url: 'assets/douars/' + code + '.geojson.gz',
