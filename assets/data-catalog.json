@@ -1,5 +1,5 @@
 {
-  "version": "maroc-v31-20261024",
+  "version": "maroc-v32-20261024",
   "generatedAt": "2026-10-21T08:25:58Z",
   "strategy": "native-esm-lazy-map",
   "layers": {
@@ -48,7 +48,7 @@
       "estimatedFeatures": 0,
       "communesWithFeatures": 562,
       "regions": 12,
-      "bytesCompressed": 1774861,
+      "bytesCompressed": 1774962,
       "loading": "Quartiers cartographiés et îlots urbains estimés à partir du réseau routier et des empreintes de bâtiments OSM, visibles au zoom 11+.",
       "geometrySources": [
         "Contours de quartiers réellement cartographiés : OpenStreetMap et polygones de quartiers Overture, conservés comme sources distinctes.",
@@ -151,6 +151,24 @@
       "limitation": "Poste Maroc ne fournit pas de contours. Les entrées OSM supplémentaires sont des entités cartographiées, pas des limites administratives officielles. Les entrées non localisées restent sans géométrie ; aucune limite n'est inventée.",
       "postalFeatures": 10026,
       "osmSupplementFeatures": 1980
+    },
+    "ruralDouars": {
+      "url": "assets/douars-index.json",
+      "features": 33189,
+      "locatedPoints": 14860,
+      "unlocatedFeatures": 18329,
+      "population": 13551229,
+      "households": 3097446,
+      "communes": 1279,
+      "regions": 12,
+      "bytesCompressed": 1383758,
+      "source": "HCP RGPH 2024; GeoNames and OpenStreetMap for matched point locations",
+      "sourceDate": "HCP RGPH 2024; upstream matching snapshot pinned by commit",
+      "license": "HCP CC BY 4.0; GeoNames CC BY 4.0; OSM ODbL 1.0",
+      "loading": "Points sourcés de douars ruraux chargés à la demande à partir du zoom 8; aucune frontière n'est inventée.",
+      "method": "Appariement conservateur des codes HCP aux lieux GeoNames/OSM; les correspondances et leur méthode sont conservées par enregistrement.",
+      "limitation": "Les douars ruraux sont distincts des quartiers urbains. Un point indique un lieu, pas son contour; les entrées sans localisation restent sans géométrie.",
+      "upstreamCommit": "7204f75e503c59c7f34c2b7ced7fe47ccff5558c"
     }
   },
   "scripts": {

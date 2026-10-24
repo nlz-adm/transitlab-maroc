@@ -1,0 +1,309 @@
+{
+  "version": "morocco-hcp-douars-2024-7204f75e503c",
+  "generatedAt": "2026-10-24T10:47:12+00:00",
+  "upstream": {
+    "repository": "https://github.com/zkousama/morocco-communes",
+    "commit": "7204f75e503c59c7f34c2b7ced7fe47ccff5558c",
+    "douarDataset": "data/v1/douars/{region}.json",
+    "matchedPoints": "api/data/douar-places.json"
+  },
+  "source": "Haut-Commissariat au Plan · RGPH 2024 · population et ménages par douar",
+  "sourceDate": "RGPH 2024; source workbook published October 2025",
+  "sourceUrl": "https://www.hcp.ma/Population-et-menages-par-douars-selon-les-resultats-du-recensement-general-de-la-population-et-de-l-habitat-de-2024_a4208.html",
+  "sourceWorkbookUrl": "https://www.hcp.ma/file/245768/",
+  "sourceLicense": "CC BY 4.0",
+  "pointSources": {
+    "osm": {
+      "count": 2711,
+      "license": "ODbL 1.0"
+    },
+    "geonames": {
+      "count": 12149,
+      "license": "CC BY 4.0"
+    }
+  },
+  "matchMethods": {
+    "name": 12309,
+    "near": 2551
+  },
+  "features": 33189,
+  "locatedPoints": 14860,
+  "unlocatedFeatures": 18329,
+  "population": 13551229,
+  "households": 3097446,
+  "communes": 1279,
+  "topicsWithheldOrMissing": 10560,
+  "types": {
+    "dispersed": 5616,
+    "grouped": 19096,
+    "split": 8477
+  },
+  "regions": [
+    {
+      "code": "01",
+      "url": "assets/douars/01.geojson.gz",
+      "count": 3017,
+      "pointCount": 2228,
+      "unlocatedCount": 789,
+      "communes": 129,
+      "population": 1382463,
+      "households": 320093,
+      "types": {
+        "dispersed": 279,
+        "grouped": 1748,
+        "split": 990
+      },
+      "bbox": [
+        -6.22419,
+        34.5121,
+        -3.81482,
+        35.90626
+      ],
+      "bytesCompressed": 142847
+    },
+    {
+      "code": "02",
+      "url": "assets/douars/02.geojson.gz",
+      "count": 2121,
+      "pointCount": 748,
+      "unlocatedCount": 1373,
+      "communes": 96,
+      "population": 777608,
+      "households": 184683,
+      "types": {
+        "dispersed": 823,
+        "grouped": 801,
+        "split": 497
+      },
+      "bbox": [
+        -4.0169,
+        32.05394,
+        -1.003,
+        35.41943
+      ],
+      "bytesCompressed": 85730
+    },
+    {
+      "code": "03",
+      "url": "assets/douars/03.geojson.gz",
+      "count": 4246,
+      "pointCount": 1591,
+      "unlocatedCount": 2655,
+      "communes": 161,
+      "population": 1604546,
+      "households": 379908,
+      "types": {
+        "dispersed": 967,
+        "grouped": 1925,
+        "split": 1354
+      },
+      "bbox": [
+        -5.75656,
+        32.63985,
+        -3.52,
+        34.88461
+      ],
+      "bytesCompressed": 171965
+    },
+    {
+      "code": "04",
+      "url": "assets/douars/04.geojson.gz",
+      "count": 2125,
+      "pointCount": 658,
+      "unlocatedCount": 1467,
+      "communes": 91,
+      "population": 1496368,
+      "households": 316808,
+      "types": {
+        "dispersed": 487,
+        "grouped": 1298,
+        "split": 340
+      },
+      "bbox": [
+        -7.06086,
+        33.32732,
+        -5.33467,
+        35.00128
+      ],
+      "bytesCompressed": 83837
+    },
+    {
+      "code": "05",
+      "url": "assets/douars/05.geojson.gz",
+      "count": 2485,
+      "pointCount": 845,
+      "unlocatedCount": 1640,
+      "communes": 119,
+      "population": 1235741,
+      "households": 277894,
+      "types": {
+        "dispersed": 1131,
+        "grouped": 894,
+        "split": 460
+      },
+      "bbox": [
+        -7.29519,
+        31.36328,
+        -5.33328,
+        33.32449
+      ],
+      "bytesCompressed": 97094
+    },
+    {
+      "code": "06",
+      "url": "assets/douars/06.geojson.gz",
+      "count": 3475,
+      "pointCount": 953,
+      "unlocatedCount": 2522,
+      "communes": 124,
+      "population": 2045890,
+      "households": 466310,
+      "types": {
+        "dispersed": 692,
+        "grouped": 1789,
+        "split": 994
+      },
+      "bbox": [
+        -8.99764,
+        32.34551,
+        -6.85539,
+        33.82283
+      ],
+      "bytesCompressed": 131380
+    },
+    {
+      "code": "07",
+      "url": "assets/douars/07.geojson.gz",
+      "count": 6531,
+      "pointCount": 3017,
+      "unlocatedCount": 3514,
+      "communes": 228,
+      "population": 2629485,
+      "households": 604267,
+      "types": {
+        "dispersed": 463,
+        "grouped": 3560,
+        "split": 2508
+      },
+      "bbox": [
+        -9.81709,
+        30.79442,
+        -7.04371,
+        32.7
+      ],
+      "bytesCompressed": 276796
+    },
+    {
+      "code": "08",
+      "url": "assets/douars/08.geojson.gz",
+      "count": 2273,
+      "pointCount": 1007,
+      "unlocatedCount": 1266,
+      "communes": 109,
+      "population": 1035265,
+      "households": 197868,
+      "types": {
+        "dispersed": 344,
+        "grouped": 1684,
+        "split": 245
+      },
+      "bbox": [
+        -7.69144,
+        29.81,
+        -3.43991,
+        33.00619
+      ],
+      "bytesCompressed": 96579
+    },
+    {
+      "code": "09",
+      "url": "assets/douars/09.geojson.gz",
+      "count": 5470,
+      "pointCount": 3487,
+      "unlocatedCount": 1983,
+      "communes": 154,
+      "population": 1196727,
+      "households": 308262,
+      "types": {
+        "dispersed": 299,
+        "grouped": 4314,
+        "split": 857
+      },
+      "bbox": [
+        -10.00202,
+        29.12199,
+        -6.60653,
+        31.06144
+      ],
+      "bytesCompressed": 245185
+    },
+    {
+      "code": "10",
+      "url": "assets/douars/10.geojson.gz",
+      "count": 1387,
+      "pointCount": 315,
+      "unlocatedCount": 1072,
+      "communes": 45,
+      "population": 119158,
+      "households": 30985,
+      "types": {
+        "dispersed": 122,
+        "grouped": 1037,
+        "split": 228
+      },
+      "bbox": [
+        -10.84665,
+        28.45953,
+        -9.21321,
+        29.62211
+      ],
+      "bytesCompressed": 48579
+    },
+    {
+      "code": "11",
+      "url": "assets/douars/11.geojson.gz",
+      "count": 29,
+      "pointCount": 8,
+      "unlocatedCount": 21,
+      "communes": 15,
+      "population": 11288,
+      "households": 3836,
+      "types": {
+        "dispersed": 8,
+        "grouped": 20,
+        "split": 1
+      },
+      "bbox": [
+        -14.20193,
+        26.1595,
+        -10.55899,
+        27.67394
+      ],
+      "bytesCompressed": 1861
+    },
+    {
+      "code": "12",
+      "url": "assets/douars/12.geojson.gz",
+      "count": 30,
+      "pointCount": 3,
+      "unlocatedCount": 27,
+      "communes": 8,
+      "population": 16690,
+      "households": 6532,
+      "types": {
+        "dispersed": 1,
+        "grouped": 26,
+        "split": 3
+      },
+      "bbox": [
+        -14.89389,
+        21.6348,
+        -13.25,
+        24.16667
+      ],
+      "bytesCompressed": 1905
+    }
+  ],
+  "bytesCompressed": 1383758,
+  "limitation": "HCP fournit les noms, populations et ménages des douars ruraux, pas leurs contours. Seuls les douars rapprochés d'un point GeoNames/OSM sont affichés sur la carte. Un point représente un lieu, pas la limite de son territoire. Les autres restent dans le fichier avec geometry=null ; aucun point ni polygone n'est inventé."
+}
