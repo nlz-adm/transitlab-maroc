@@ -9,6 +9,7 @@ on:
       - "tools/assign-mapped-neighborhood-polygons.py"
       - "tools/convert-multi-source-to-site-format.py"
       - "tools/build-urban-block-sectors.py"
+      - "tools/build-postal-neighborhood-registry.py"
       - "tests/**"
       - ".github/workflows/**"
       - "assets/map-app.js"
