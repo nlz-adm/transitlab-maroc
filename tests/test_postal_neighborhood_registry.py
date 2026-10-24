@@ -114,6 +114,70 @@ class PostalNeighborhoodRegistryTests(unittest.TestCase):
         self.assertEqual(totals["mapped_boundary"], 1)
         self.assertEqual(totals["unlocated"], 2)
 
+    def test_unmatched_named_osm_neighborhoods_are_added_without_faking_boundaries(self):
+        records = [
+            {"sourceId": "postal:1", "sourceRow": "sheet:2", "city": "Rabat", "cityKey": "rabat",
+             "name": "Quartier Known", "nameKey": "known", "postalCode": "10020"},
+            {"sourceId": "postal:2", "sourceRow": "sheet:3", "city": "Rabat", "cityKey": "rabat",
+             "name": "Quartier Without Geometry", "nameKey": "without geometry", "postalCode": "10030"},
+        ]
+        candidates = [
+            {"name": "Known", "nameKey": "known", "city": "Rabat", "cityKey": "rabat",
+             "sourceId": "way/1", "placeType": "neighbourhood", "geometry": box(-6.85, 34.0, -6.84, 34.01)},
+            {"name": "Hay Al Wifaq", "nameFr": "Hay Al Wifaq", "nameAr": "حي الوفاق",
+             "nameKey": "wifaq", "city": "Casablanca", "cityKey": "casablanca",
+             "sourceId": "way/2", "placeType": "suburb", "geometry": box(-7.61, 33.59, -7.60, 33.60)},
+            {"name": "Hay Al Wifaq", "nameKey": "wifaq", "city": "Casablanca", "cityKey": "casablanca",
+             "sourceId": "node/3", "placeType": "neighbourhood", "geometry": Point(-7.605, 33.595)},
+            {"name": "Sidi New", "nameKey": "sidi new", "city": "Marrakech", "cityKey": "marrakech",
+             "sourceId": "node/4", "placeType": "neighbourhood", "geometry": Point(-8.0, 31.6)},
+            {"name": "Quartier Without Geometry", "nameKey": "without geometry", "city": "", "cityKey": "",
+             "sourceId": "node/5", "placeType": "neighbourhood", "geometry": Point(-6.84, 34.02)},
+        ]
+
+        features, totals, city_stats, duplicates = MODULE.build_registry(
+            records, candidates, include_unmatched_osm=True
+        )
+
+        self.assertEqual(len(features), 4)
+        self.assertEqual(features[0]["properties"]["source"], "poste_maroc_2018")
+        self.assertEqual(features[0]["properties"]["geometryStatus"], "mapped_boundary")
+        self.assertEqual(features[1]["properties"]["geometryStatus"], "unlocated")
+        self.assertIsNone(features[1]["geometry"])
+        osm_features = [f for f in features if f["properties"].get("source") == "openstreetmap"]
+        self.assertEqual(len(osm_features), 2)
+        by_name = {f["properties"]["name"]: f for f in osm_features}
+        self.assertEqual(by_name["Hay Al Wifaq"]["geometry"]["type"], "Polygon")
+        self.assertEqual(by_name["Hay Al Wifaq"]["properties"]["name_ar"], "حي الوفاق")
+        self.assertEqual(by_name["Hay Al Wifaq"]["properties"]["geometryStatus"], "mapped_boundary")
+        self.assertEqual(by_name["Sidi New"]["geometry"]["type"], "Point")
+        self.assertNotIn("postalCode", by_name["Sidi New"], "Postal metadata must not be fabricated")
+        self.assertEqual(totals["mapped_boundary"], 2)
+        self.assertEqual(totals["mapped_point"], 1)
+        self.assertEqual(totals["unlocated"], 1)
+
+    def test_untagged_osm_features_get_their_commune_from_real_geometry(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            commune_path = Path(tmp) / "communes.geojson"
+            commune_path.write_text(json.dumps({
+                "type": "FeatureCollection",
+                "features": [{
+                    "type": "Feature",
+                    "properties": {"code": "MA001", "name_fr": "Rabat"},
+                    "geometry": mapping(box(-7.0, 33.0, -6.0, 35.0)),
+                }],
+            }), encoding="utf-8")
+            communes, geometries, tree = MODULE.prepare_commune_areas(commune_path)
+            candidates = [{
+                "name": "Hay Untagged", "nameKey": "untagged", "city": "", "cityKey": "",
+                "sourceId": "node/9", "geometry": Point(-6.84, 34.02),
+            }]
+            MODULE.enrich_candidates_with_communes(candidates, communes, geometries, tree)
+
+        self.assertEqual(candidates[0]["city"], "Rabat")
+        self.assertEqual(candidates[0]["cityKey"], "rabat")
+        self.assertEqual(candidates[0]["communeCode"], "MA001")
+
     def test_output_requires_at_least_ten_thousand_source_rows(self):
         with self.assertRaisesRegex(ValueError, "10000 required"):
             MODULE.write_outputs([], Counter(), defaultdict(Counter), 0,
