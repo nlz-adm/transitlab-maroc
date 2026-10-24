@@ -391,7 +391,7 @@ class PublishedDataIntegrityTests(unittest.TestCase):
         self.assertIn("geometryStatus", app)
         self.assertIn("aucune position ni limite n’est inventée", app)
         self.assertIn("NEIGHBORHOOD_DIRECTORY_VERSION='[^']+'", workflow)
-        self.assertIn('cache_version = "maroc-v30-"', workflow)
+        self.assertIn('cache_version = "maroc-v31-"', workflow)
 
     def test_pwa_manifest_icons_and_service_worker_precache_exist(self):
         import re
