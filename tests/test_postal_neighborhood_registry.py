@@ -36,6 +36,30 @@ class PostalNeighborhoodRegistryTests(unittest.TestCase):
         self.assertEqual(records[0]["nameKey"], "hassan")
         self.assertEqual(records[1]["nameKey"], "amal")
 
+    def test_loads_parquet_mirror_rows(self):
+        import pyarrow as pa
+        import pyarrow.parquet as pq
+
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "postal.parquet"
+            table = pa.table({
+                "source_record_id": ["poste:0", "poste:1"],
+                "source_sheet": ["Codes postal Géographiques", "Codes postal Géographiques"],
+                "ville": ["RABAT", "CASABLANCA"],
+                "quartier": ["QUARTIER HASSAN", "HAY AL AMAL"],
+                "nouveau_code_postal": [10020, 20250],
+            })
+            pq.write_table(table, path)
+            records = MODULE.load_postal_rows(path)
+
+        self.assertEqual(len(records), 2)
+        self.assertEqual(records[0]["city"], "RABAT")
+        self.assertEqual(records[0]["name"], "QUARTIER HASSAN")
+        self.assertEqual(records[0]["postalCode"], "10020")
+        self.assertEqual(records[0]["nameKey"], "hassan")
+        self.assertEqual(records[0]["sourceRow"], "poste:0")
+        self.assertEqual(records[1]["nameKey"], "amal")
+
     def test_geojsonseq_accepts_named_neighborhood_point_and_polygon(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "places.geojsonseq"

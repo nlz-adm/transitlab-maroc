@@ -52,6 +52,47 @@ def cell_text(value: Any) -> str:
 
 
 def load_postal_rows(path: Path) -> list[dict[str, str]]:
+    """Read the official Poste Maroc spreadsheet or its Parquet mirror."""
+    if path.suffix.casefold() == ".parquet":
+        try:
+            import pyarrow.parquet as pq
+        except ImportError as exc:
+            raise RuntimeError("Reading the Poste Maroc Parquet mirror requires pyarrow") from exc
+
+        table = pq.read_table(path)
+        available = set(table.column_names)
+        city_column = next((name for name in ("ville", "city", "commune") if name in available), None)
+        name_column = next((name for name in ("quartier", "neighborhood", "neighbourhood") if name in available), None)
+        code_column = next((name for name in ("nouveau_code_postal", "code_postal", "postal_code") if name in available), None)
+        source_column = "source_record_id" if "source_record_id" in available else None
+        sheet_column = "source_sheet" if "source_sheet" in available else None
+        if city_column is None or name_column is None:
+            raise ValueError("Parquet mirror has no supported Ville/Quartier columns")
+
+        records: list[dict[str, str]] = []
+        for row_no, row in enumerate(table.to_pylist(), start=1):
+            city, name = cell_text(row.get(city_column)), cell_text(row.get(name_column))
+            if not city or not name:
+                continue
+            postcode = cell_text(row.get(code_column)) if code_column else ""
+            source_record_id = cell_text(row.get(source_column)) if source_column else ""
+            source_sheet = cell_text(row.get(sheet_column)) if sheet_column else "parquet"
+            source_key = source_record_id or "\x1f".join(
+                (source_sheet, str(row_no), fold(city), fold(name), postcode)
+            )
+            records.append({
+                "sourceId": hashlib.sha1(source_key.encode("utf-8")).hexdigest()[:16],
+                "sourceRow": source_record_id or f"{source_sheet}:{row_no}",
+                "city": city,
+                "cityKey": fold(city),
+                "name": name,
+                "nameKey": name_key(name),
+                "postalCode": postcode,
+            })
+        if not records:
+            raise ValueError("No rows with Ville and Quartier columns found in Poste Maroc Parquet mirror")
+        return records
+
     import openpyxl
 
     book = openpyxl.load_workbook(path, read_only=True, data_only=True)
@@ -94,7 +135,6 @@ def load_postal_rows(path: Path) -> list[dict[str, str]]:
     if not records:
         raise ValueError("No rows with Ville and Quartier columns found in Poste Maroc workbook")
     return records
-
 
 def read_geojsonseq(path: Path | None) -> list[dict[str, Any]]:
     if path is None or not path.is_file():
@@ -269,13 +309,13 @@ def write_outputs(features, totals, city_stats, duplicates, output: Path, index_
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--postal-xlsx", required=True, type=Path)
+    parser.add_argument("--postal-data", "--postal-xlsx", dest="postal_data", required=True, type=Path)
     parser.add_argument("--osm-geojsonseq", type=Path, default=None)
     parser.add_argument("--output", type=Path, default=Path("assets/neighborhood-directory/postal-neighborhoods.geojson.gz"))
     parser.add_argument("--index", type=Path, default=Path("assets/neighborhood-directory-index.json"))
     parser.add_argument("--report", type=Path, default=Path("reports/postal-neighborhood-coverage.md"))
     args = parser.parse_args()
-    records = load_postal_rows(args.postal_xlsx)
+    records = load_postal_rows(args.postal_data)
     candidates = read_geojsonseq(args.osm_geojsonseq)
     features, totals, city_stats, duplicates = build_registry(records, candidates)
     index = write_outputs(features, totals, city_stats, duplicates, args.output, args.index, args.report)

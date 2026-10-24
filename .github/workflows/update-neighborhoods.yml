@@ -44,7 +44,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install "shapely>=2.1" requests openpyxl overturemaps
+          pip install "shapely>=2.1" requests openpyxl pyarrow overturemaps
 
       - name: Run regression tests
         run: python -m unittest discover -s tests -v
@@ -242,10 +242,53 @@ jobs:
         run: |
           set -euo pipefail
           POSTAL_URL="https://data.gov.ma/data/dataset/e0093dbf-38f0-440a-91da-ad3f0243f378/resource/7f257007-d512-4a2e-9f7f-ba29ee4ac8b1/download/codes-postaux-quartiers-2018.xlsx"
-          curl -fL --retry 3 --retry-delay 3 "$POSTAL_URL" -o /tmp/codes-postaux-quartiers-2018.xlsx
-          test "$(stat -c%s /tmp/codes-postaux-quartiers-2018.xlsx)" -gt 100000
+          POSTAL_MIRROR_URL="http://datagovma.webhi.net/data/ar/dataset/e0093dbf-38f0-440a-91da-ad3f0243f378/resource/7f257007-d512-4a2e-9f7f-ba29ee4ac8b1/download/codes-postaux-quartiers-2018.xlsx"
+          POSTAL_HF_BASE="https://huggingface.co/datasets/electricsheepafrica/africa-morocco-codes-postaux-des-quartiers-1d96cfdb/resolve/main"
+          POSTAL_FILE=""
+
+          # The official data.gov.ma host sometimes resets connections. Retry all
+          # network errors, then fall back to the archived mirror and a Parquet
+          # mirror of the same 10,026-row Poste Maroc source.
+          if curl -fLsS --connect-timeout 20 --max-time 180 --retry 4 --retry-all-errors --retry-delay 3 \
+              "$POSTAL_URL" -o /tmp/postal-neighborhoods.xlsx; then
+            if test "$(stat -c%s /tmp/postal-neighborhoods.xlsx)" -gt 100000; then
+              POSTAL_FILE="/tmp/postal-neighborhoods.xlsx"
+              echo "Poste Maroc source downloaded from data.gov.ma."
+            fi
+          fi
+
+          if [ -z "$POSTAL_FILE" ]; then
+            echo "Primary postal source unavailable; trying archive mirror."
+            if curl -fLsS --connect-timeout 20 --max-time 180 --retry 2 --retry-all-errors --retry-delay 2 \
+                "$POSTAL_MIRROR_URL" -o /tmp/postal-neighborhoods-mirror.xlsx; then
+              if test "$(stat -c%s /tmp/postal-neighborhoods-mirror.xlsx)" -gt 100000; then
+                POSTAL_FILE="/tmp/postal-neighborhoods-mirror.xlsx"
+                echo "Poste Maroc source downloaded from the archived mirror."
+              fi
+            fi
+          fi
+
+          if [ -z "$POSTAL_FILE" ]; then
+            echo "Spreadsheet mirrors unavailable; trying the reproducible Parquet mirror."
+            for PARQUET_PATH in "data/train-00000-of-00001.parquet" "train-00000-of-00001.parquet"; do
+              if curl -fLsS --connect-timeout 20 --max-time 240 --retry 3 --retry-all-errors --retry-delay 2 \
+                  "$POSTAL_HF_BASE/$PARQUET_PATH?download=true" -o /tmp/postal-neighborhoods.parquet; then
+                if test "$(stat -c%s /tmp/postal-neighborhoods.parquet)" -gt 10000; then
+                  POSTAL_FILE="/tmp/postal-neighborhoods.parquet"
+                  echo "Poste Maroc Parquet mirror downloaded from Hugging Face ($PARQUET_PATH)."
+                  break
+                fi
+              fi
+            done
+          fi
+
+          if [ -z "$POSTAL_FILE" ]; then
+            echo "::error::Could not retrieve the 10,026-row Poste Maroc neighborhood catalogue from any configured source."
+            exit 1
+          fi
+
           python tools/build-postal-neighborhood-registry.py \
-            --postal-xlsx /tmp/codes-postaux-quartiers-2018.xlsx \
+            --postal-data "$POSTAL_FILE" \
             --osm-geojsonseq /tmp/morocco-neighborhoods.geojsonseq \
             --output assets/neighborhood-directory/postal-neighborhoods.geojson.gz \
             --index assets/neighborhood-directory-index.json \
