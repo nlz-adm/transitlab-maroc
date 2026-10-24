@@ -330,7 +330,7 @@ jobs:
           if count != 1:
               raise SystemExit("Impossible de synchroniser la version de l'index dans map-app.js.")
 
-          cache_version = "maroc-v29-" + time.strftime("%Y%m%d", time.gmtime())
+          cache_version = "maroc-v30-" + time.strftime("%Y%m%d", time.gmtime())
           app = re.sub(r"maroc-v\d+-\d{8}", cache_version, app)
           app_path.write_text(app, encoding="utf-8")
 
@@ -366,6 +366,14 @@ jobs:
           })
           directory_index_path = Path("assets/neighborhood-directory-index.json")
           directory_index = json.loads(directory_index_path.read_text(encoding="utf-8"))
+          app, directory_version_count = re.subn(
+              r"NEIGHBORHOOD_DIRECTORY_VERSION='[^']+'",
+              "NEIGHBORHOOD_DIRECTORY_VERSION='" + str(directory_index["version"]) + "'",
+              app, count=1
+          )
+          if directory_version_count != 1:
+              raise SystemExit("Impossible de synchroniser la version du répertoire de quartiers dans map-app.js.")
+          app_path.write_text(app, encoding="utf-8")
           directory_layer = catalog.setdefault("layers", {}).setdefault("postalNeighborhoodDirectory", {})
           directory_layer.update({
               "url": "assets/neighborhood-directory-index.json",
