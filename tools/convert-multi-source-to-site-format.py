@@ -66,7 +66,7 @@ def convert_feature(feature: dict) -> dict:
     
     # Mapper les propriétés
     explicit_kind = props.get("boundaryKind")
-    boundary_kind = explicit_kind if explicit_kind in {"mapped", "urban_block"} else (
+    boundary_kind = explicit_kind if explicit_kind in {"mapped", "urban_block", "estimated_neighborhood"} else (
         "estimated" if props.get("estimated", True) else "mapped"
     )
     converted_props = {
@@ -93,6 +93,12 @@ def convert_feature(feature: dict) -> dict:
         "sourceDetail": props.get("sourceDetail", ""),
         "sourceRef": props.get("sourceRef", ""),
         "sourceRelease": props.get("sourceRelease", ""),
+        "blockCount": props.get("blockCount"),
+        "sourceTileCount": props.get("sourceTileCount"),
+        "nameSource": props.get("nameSource", ""),
+        "nameSourceId": props.get("nameSourceId", ""),
+        "nameSourceSubtype": props.get("nameSourceSubtype"),
+        "candidatePlaceNames": props.get("candidatePlaceNames", []),
     }
     
     return {
@@ -146,6 +152,9 @@ def main():
     parser.add_argument("--urban-blocks", help="GeoJSON des îlots urbains estimés, issus des rues et bâtiments OSM")
     parser.add_argument("--min-urban-blocks", type=int, default=10000,
                         help="Nombre minimal d'îlots urbains requis avant publication (défaut : 10000)")
+    parser.add_argument("--estimated-neighborhoods", help="GeoJSON de 10 000 unités de quartier estimées, séparées des vrais contours")
+    parser.add_argument("--expected-estimated-neighborhoods", type=int, default=10000,
+                        help="Nombre exact d'unités de quartier estimées attendu avant publication")
     args = parser.parse_args()
     
     # Charger les données
@@ -178,6 +187,26 @@ def main():
         features.extend(blocks)
         urban_block_count = len(blocks)
         print(f"  → {urban_block_count} îlots urbains estimés retenus, distincts des quartiers cartographiés")
+    estimated_neighborhood_count = 0
+    if args.estimated_neighborhoods:
+        zones_path = Path(args.estimated_neighborhoods)
+        if not zones_path.is_file():
+            raise SystemExit(f"Fichier des quartiers estimés manquant : {zones_path}")
+        zones_data = json.loads(zones_path.read_text(encoding="utf-8"))
+        zones = [
+            feature for feature in zones_data.get("features", [])
+            if (feature.get("properties") or {}).get("boundaryKind") == "estimated_neighborhood"
+            and (feature.get("properties") or {}).get("estimated") is True
+            and (feature.get("geometry") or {}).get("type") in {"Polygon", "MultiPolygon"}
+        ]
+        if len(zones) != args.expected_estimated_neighborhoods:
+            raise SystemExit(
+                f"Seulement {len(zones)} unités de quartier estimées valides ; "
+                f"{args.expected_estimated_neighborhoods} exactement requises. Données publiées conservées."
+            )
+        features.extend(zones)
+        estimated_neighborhood_count = len(zones)
+        print(f"  → {estimated_neighborhood_count} unités de quartier estimées retenues, distinctes des quartiers cartographiés et des îlots")
     if not features:
         if args.mapped_only:
             raise SystemExit("ERREUR: aucune géométrie éligible ; index et données publiés conservés.")
@@ -207,6 +236,7 @@ def main():
     total_mapped = 0
     total_estimated = 0
     total_urban_blocks = 0
+    total_estimated_neighborhoods = 0
     communes_with_features = set()
     
     for region_code in sorted(by_region.keys()):
@@ -217,6 +247,7 @@ def main():
         # Statistiques
         mapped = sum(1 for f in region_features if f["properties"]["boundaryKind"] == "mapped")
         urban_blocks = sum(1 for f in region_features if f["properties"]["boundaryKind"] == "urban_block")
+        estimated_neighborhoods = sum(1 for f in region_features if f["properties"]["boundaryKind"] == "estimated_neighborhood")
         estimated = sum(1 for f in region_features if f["properties"]["boundaryKind"] == "estimated")
         communes = set(f["properties"]["commune_id"] for f in region_features)
         
@@ -224,6 +255,7 @@ def main():
         total_mapped += mapped
         total_estimated += estimated
         total_urban_blocks += urban_blocks
+        total_estimated_neighborhoods += estimated_neighborhoods
         communes_with_features.update(communes)
         
         # Créer le GeoJSON régional
@@ -249,6 +281,7 @@ def main():
             "mapped": mapped,
             "estimated": estimated,
             "urbanBlocks": urban_blocks,
+            "estimatedNeighborhoods": estimated_neighborhoods,
             "communes": len(communes),
             "bytesCompressed": compressed_size,
         })
@@ -265,17 +298,19 @@ def main():
         "mappedFeatures": total_mapped,
         "estimatedFeatures": total_estimated,
         "urbanBlockFeatures": total_urban_blocks,
+        "estimatedNeighborhoodFeatures": total_estimated_neighborhoods,
         "communesWithFeatures": len(communes_with_features),
         "communesTotal": 1502,  # Total communes au Maroc
         "coverage": round(100 * len(communes_with_features) / 1502, 1),
         "sources": {
             "mappedGeometry": "Polygones OpenStreetMap (place=neighbourhood/suburb/quarter)",
             "estimatedGeometry": "Îlots urbains estimés à partir de polygones fermés par des rues OSM et vérifiés par des empreintes de bâtiments",
+            "estimatedNeighborhoodGeometry": "Groupes contigus d’îlots routiers OSM fusionnés en unités de quartier de taille indicative ; non officielles",
             "gridGeometry": "Aucune cellule Voronoï synthétique publiée",
             "communeContext": "morocco-communes 1.10.0 (HCP RGPH 2024)",
         },
         "licenses": ["ODbL 1.0", "CC-BY 4.0"],
-        "limitations": "Les quartiers cartographiés conservent leur géométrie source. Les îlots urbains estimés suivent des rues OSM et exigent des empreintes de bâtiments ; ils ne sont pas des quartiers officiels. La densité est estimée séparément à partir de Kontur/HDX.",
+        "limitations": "Les quartiers cartographiés conservent leur géométrie source. Les unités de quartier estimées sont des groupes contigus d’îlots OSM et ne sont pas des quartiers officiels ; les îlots urbains restent également une couche distincte. La densité est estimée séparément à partir de Kontur/HDX.",
         "pipeline": "prepare-neighborhood-boundaries-multi-source.py",
     }
     
@@ -284,7 +319,7 @@ def main():
         json.dump(index, f, ensure_ascii=False, indent=2)
     
     print(f"\n→ Index sauvegardé dans {args.index}")
-    print(f"→ Total: {total_features} secteurs ({total_mapped} quartiers cartographiés, {total_urban_blocks} îlots urbains estimés, {total_estimated} autres estimations)")
+    print(f"→ Total: {total_features} polygones ({total_mapped} contours cartographiés, {total_estimated_neighborhoods} unités de quartier estimées, {total_urban_blocks} îlots urbains estimés, {total_estimated} autres estimations)")
     print(f"→ Couverture: {len(communes_with_features)}/1502 communes ({index['coverage']}%)")
     print("\nConversion terminée !")
 
