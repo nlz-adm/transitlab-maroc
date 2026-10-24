@@ -375,6 +375,24 @@ class PublishedDataIntegrityTests(unittest.TestCase):
         self.assertIn("request.mode === 'navigate'", worker)
         self.assertIn("fetch(request, { cache: 'no-cache' })", worker)
 
+    def test_postal_neighborhood_directory_search_is_connected_and_provenance_safe(self):
+        html = (ROOT / "carte-interactive-maroc.html").read_text(encoding="utf-8")
+        app = (ROOT / "assets" / "map-app.js").read_text(encoding="utf-8")
+        workflow = (ROOT / ".github" / "workflows" / "update-neighborhoods.yml").read_text(encoding="utf-8")
+        index = json.loads((ROOT / "assets" / "neighborhood-directory-index.json").read_text(encoding="utf-8"))
+
+        self.assertIn('id="neighborhoodDirectoryButton"', html)
+        self.assertIn('id="neighborhoodDirectorySearch"', html)
+        self.assertIn('id="neighborhoodDirectoryStatusFilter"', html)
+        self.assertIn('id="neighborhoodDirectoryStatus"', html)
+        self.assertIn("NEIGHBORHOOD_DIRECTORY_VERSION='" + index["version"] + "'", app)
+        self.assertIn("assets/neighborhood-directory-index.json", app)
+        self.assertIn("new DecompressionStream('gzip')", app)
+        self.assertIn("geometryStatus", app)
+        self.assertIn("aucune position ni limite n’est inventée", app)
+        self.assertIn("NEIGHBORHOOD_DIRECTORY_VERSION='[^']+'", workflow)
+        self.assertIn('cache_version = "maroc-v30-"', workflow)
+
     def test_pwa_manifest_icons_and_service_worker_precache_exist(self):
         import re
 
