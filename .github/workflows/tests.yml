@@ -6,6 +6,7 @@ on:
     paths:
       - "tools/prepare-neighborhood-boundaries-multi-source.py"
       - "tools/fetch-overture-neighborhood-areas.py"
+      - "tools/extract-osm-neighborhood-polygons.py"
       - "tools/assign-mapped-neighborhood-polygons.py"
       - "tools/convert-multi-source-to-site-format.py"
       - "tools/build-urban-block-sectors.py"
@@ -25,6 +26,7 @@ on:
     paths:
       - "tools/prepare-neighborhood-boundaries-multi-source.py"
       - "tools/fetch-overture-neighborhood-areas.py"
+      - "tools/extract-osm-neighborhood-polygons.py"
       - "tools/assign-mapped-neighborhood-polygons.py"
       - "tools/convert-multi-source-to-site-format.py"
       - "tools/build-urban-block-sectors.py"
