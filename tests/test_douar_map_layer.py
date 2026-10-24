@@ -153,6 +153,7 @@ class DouarMapLayerTests(unittest.TestCase):
                     source_commit="123456789abcdef",
                     min_features=1,
                     min_points=1,
+                    min_communes=1,
                 )
 
 
