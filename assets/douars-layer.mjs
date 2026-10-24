@@ -190,7 +190,6 @@ export function attachDouarLayer(options) {
     if (prior && map.hasLayer(prior)) map.removeLayer(prior);
     const layer = L.geoJSON({ type: 'FeatureCollection', features: points }, {
       pane: 'douarsPane',
-      renderer: L.canvas({ padding: 0.15 }),
       pointToLayer(feature, latlng) {
         return L.circleMarker(latlng, {
           pane: 'douarsPane',
