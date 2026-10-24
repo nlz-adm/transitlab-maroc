@@ -512,7 +512,12 @@ jobs:
                   raise SystemExit("Une entrée non localisée ne doit pas recevoir de géométrie inventée.")
           postal_count = sum(1 for feature in features if (feature.get("properties") or {}).get("source") == "poste_maroc_2018")
           osm_count = sum(1 for feature in features if (feature.get("properties") or {}).get("source") == "openstreetmap")
-          if postal_count != index.get("postalFeatures") or osm_count != index.get("osmSupplementFeatures"):
+          overture_count = sum(1 for feature in features if (feature.get("properties") or {}).get("source") == "overture")
+          if (
+              postal_count != index.get("postalFeatures")
+              or osm_count != index.get("osmSupplementFeatures")
+              or overture_count != index.get("overtureSupplementFeatures")
+          ):
               raise SystemExit("Les compteurs par source ne correspondent pas aux données.")
           expected = {
               "mappedBoundaryFeatures": counts["mapped_boundary"],
