@@ -1,6 +1,6 @@
 {
-  "version": "maroc-v32-20261024",
-  "generatedAt": "2026-10-21T08:25:58Z",
+  "version": "maroc-v33-20261024",
+  "generatedAt": "2026-10-24T10:51:00Z",
   "strategy": "native-esm-lazy-map",
   "layers": {
     "network": {
