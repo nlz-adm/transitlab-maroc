@@ -83,7 +83,7 @@ class OSMNeighbourhoodPolygonTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "places.geojsonseq"
             path.write_text(
-                "\\x1e" + json.dumps(feature("Hay Al Amal", box(-7.61, 33.59, -7.60, 33.60))) + "\\n",
+                chr(30) + json.dumps(feature("Hay Al Amal", box(-7.61, 33.59, -7.60, 33.60))) + "\n",
                 encoding="utf-8",
             )
             rows = list(MODULE.read_geojsonseq(path))
