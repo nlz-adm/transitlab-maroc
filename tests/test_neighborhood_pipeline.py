@@ -393,6 +393,38 @@ class PublishedDataIntegrityTests(unittest.TestCase):
         self.assertIn("NEIGHBORHOOD_DIRECTORY_VERSION='[^']+'", workflow)
         self.assertIn('cache_version = "maroc-v32-"', workflow)
 
+    def test_douars_layer_is_wired_as_a_separate_point_overlay(self):
+        import re
+
+        html = (ROOT / "carte-interactive-maroc.html").read_text(encoding="utf-8")
+        app = (ROOT / "assets" / "map-app.js").read_text(encoding="utf-8")
+        layer = (ROOT / "assets" / "douars-layer.mjs").read_text(encoding="utf-8")
+        worker = (ROOT / "sw.js").read_text(encoding="utf-8")
+        catalog = json.loads((ROOT / "assets" / "data-catalog.json").read_text(encoding="utf-8"))
+        index = json.loads((ROOT / "assets" / "douars-index.json").read_text(encoding="utf-8"))
+        version = catalog["version"]
+
+        self.assertIn(version, html)
+        self.assertIn(version, app)
+        self.assertIn(version, worker.splitlines()[0])
+        self.assertIn('id="douarsToggle"', html)
+        self.assertIn('id="douarLayerStatus"', html)
+        self.assertIn("import { attachDouarLayer } from './douars-layer.mjs';", app)
+        self.assertIn("attachDouarLayer({map,L,doc:document,expectedVersion:DOUAR_DATA_VERSION", app)
+        self.assertIn(f"DOUAR_DATA_VERSION='{index['version']}'", app)
+        self.assertIn("createPane('douarsPane')", app)
+        self.assertIn("validateDouarIndex", layer)
+        self.assertIn("isDouarPointVisible", layer)
+        self.assertIn("geometry.type !== 'Point'", layer)
+        self.assertIn("geometry == null", layer)
+        self.assertIn("douars-layer.mjs", worker)
+        self.assertIn("douars-index", worker)
+        self.assertRegex(worker, r"assets\\\\/douars\\\\/")
+        douar_layer = catalog["layers"]["ruralDouars"]
+        self.assertEqual(douar_layer["features"], index["features"])
+        self.assertEqual(douar_layer["locatedPoints"], index["locatedPoints"])
+        self.assertEqual(douar_layer["unlocatedFeatures"], index["unlocatedFeatures"])
+
     def test_pwa_manifest_icons_and_service_worker_precache_exist(self):
         import re
 
