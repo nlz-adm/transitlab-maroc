@@ -142,7 +142,7 @@ jobs:
             --existing assets/data/mapped-neighborhood-seeds.geojson \
             --output assets/data/mapped-neighborhood-seeds-combined.geojson \
             --report reports/overture-neighborhood-coverage.md
-            --allow-no-new
+            --min-total 30
 
       - name: Assign mapped neighbourhood polygons to communes
         run: |
