@@ -1,4 +1,4 @@
-const CACHE_NAME = 'transitlab-maroc-v32-20261024';
+const CACHE_NAME = 'transitlab-maroc-v33-20261024';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -7,6 +7,7 @@ const STATIC_ASSETS = [
   './assets/leaflet.css',
   './assets/map-boot.js',
   './assets/map-app.js',
+  './assets/douars-layer.mjs',
   './assets/population-choropleth.mjs',
   './assets/line-index-worker.js',
   './assets/data-catalog.json',
