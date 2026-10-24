@@ -10,6 +10,7 @@ on:
       - "tools/assign-mapped-neighborhood-polygons.py"
       - "tools/convert-multi-source-to-site-format.py"
       - "tools/build-urban-block-sectors.py"
+      - "tools/build-postal-neighborhood-registry.py"
       - ".github/workflows/update-neighborhoods.yml"
 
 permissions:
@@ -210,9 +211,18 @@ jobs:
           osmium export /tmp/morocco-buildings.osm.pbf \
             -f geojsonseq --geometry-types=polygon -o /tmp/morocco-buildings.geojsonseq
 
-          ls -lh /tmp/morocco-roads.geojsonseq /tmp/morocco-buildings.geojsonseq
+          osmium tags-filter /tmp/morocco-latest.osm.pbf \
+            n/place=quarter n/place=suburb n/place=neighbourhood n/place=locality \
+            w/place=quarter w/place=suburb w/place=neighbourhood w/place=locality \
+            r/place=quarter r/place=suburb r/place=neighbourhood r/place=locality \
+            n/boundary=place w/boundary=place r/boundary=place \
+            -o /tmp/morocco-neighborhoods.osm.pbf
+          osmium export /tmp/morocco-neighborhoods.osm.pbf \
+            -f geojsonseq --geometry-types=point,linestring,polygon -o /tmp/morocco-neighborhoods.geojsonseq
+
+          ls -lh /tmp/morocco-roads.geojsonseq /tmp/morocco-buildings.geojsonseq /tmp/morocco-neighborhoods.geojsonseq
           rm -f /tmp/morocco-latest.osm.pbf /tmp/morocco-latest.osm.pbf.md5 \
-            /tmp/morocco-roads.osm.pbf /tmp/morocco-buildings.osm.pbf
+            /tmp/morocco-roads.osm.pbf /tmp/morocco-buildings.osm.pbf /tmp/morocco-neighborhoods.osm.pbf
 
       - name: Build at least 10000 road-bounded urban sectors
         timeout-minutes: 45
@@ -225,6 +235,20 @@ jobs:
             --report reports/urban-block-coverage.md \
             --target-min 10000 \
             --target-max 10000
+
+      - name: Fetch Poste Maroc neighborhood catalogue and match mapped OSM geometry
+        timeout-minutes: 15
+        run: |
+          set -euo pipefail
+          POSTAL_URL="https://data.gov.ma/data/dataset/e0093dbf-38f0-440a-91da-ad3f0243f378/resource/7f257007-d512-4a2e-9f7f-ba29ee4ac8b1/download/codes-postaux-quartiers-2018.xlsx"
+          curl -fL --retry 3 --retry-delay 3 "$POSTAL_URL" -o /tmp/codes-postaux-quartiers-2018.xlsx
+          test "$(stat -c%s /tmp/codes-postaux-quartiers-2018.xlsx)" -gt 100000
+          python tools/build-postal-neighborhood-registry.py \
+            --postal-xlsx /tmp/codes-postaux-quartiers-2018.xlsx \
+            --osm-geojsonseq /tmp/morocco-neighborhoods.geojsonseq \
+            --output assets/neighborhood-directory/postal-neighborhoods.geojson.gz \
+            --index assets/neighborhood-directory-index.json \
+            --report reports/postal-neighborhood-coverage.md
 
       - name: Convert validated data to site format
         run: |
@@ -262,7 +286,7 @@ jobs:
           if count != 1:
               raise SystemExit("Impossible de synchroniser la version de l'index dans map-app.js.")
 
-          cache_version = "maroc-v28-" + time.strftime("%Y%m%d", time.gmtime())
+          cache_version = "maroc-v29-" + time.strftime("%Y%m%d", time.gmtime())
           app = re.sub(r"maroc-v\d+-\d{8}", cache_version, app)
           app_path.write_text(app, encoding="utf-8")
 
@@ -296,6 +320,24 @@ jobs:
               "license": " ; ".join(index.get("licenses", ["ODbL 1.0"])),
               "limitation": "Les îlots urbains suivent les rues et les empreintes bâties, mais ne sont pas des quartiers officiels. Les zones où OSM est incomplet peuvent rester sans secteur.",
           })
+          directory_index_path = Path("assets/neighborhood-directory-index.json")
+          directory_index = json.loads(directory_index_path.read_text(encoding="utf-8"))
+          directory_layer = catalog.setdefault("layers", {}).setdefault("postalNeighborhoodDirectory", {})
+          directory_layer.update({
+              "url": "assets/neighborhood-directory-index.json",
+              "features": int(directory_index.get("features", 0)),
+              "mappedBoundaryFeatures": int(directory_index.get("mappedBoundaryFeatures", 0)),
+              "mappedPointFeatures": int(directory_index.get("mappedPointFeatures", 0)),
+              "unlocatedFeatures": int(directory_index.get("unlocatedFeatures", 0)),
+              "bytesCompressed": int(directory_index.get("bytesCompressed", 0)),
+              "source": "Barid Al Maghrib · Codes postaux des quartiers",
+              "sourceDate": "2018-09",
+              "license": "ODbL 1.0",
+              "loading": "Répertoire des noms de quartiers par ville et code postal, avec géométries OSM uniquement lorsque le nom est localisé de façon fiable.",
+              "method": "Correspondance entre la ville et le nom de quartier Poste Maroc et les entités OSM place=quarter/suburb/neighbourhood/locality ou boundary=place.",
+              "limitation": "La source postale ne fournit pas de contours. Les points ne sont pas des frontières et les entrées non localisées restent sans géométrie ; aucune limite n'est inventée.",
+          })
+
           catalog["version"] = cache_version
           catalog_path.write_text(
               json.dumps(catalog, ensure_ascii=False, indent=2) + "\n",
@@ -335,11 +377,49 @@ jobs:
           print(f"Index cohérent : {index['features']} vrais contours, {index.get('communesWithFeatures', 0)} communes, {len(regions)} régions.")
           PY
 
+      - name: Validate postal neighborhood directory
+        run: |
+          python - <<'PY'
+          import gzip
+          import json
+          from pathlib import Path
+
+          index = json.loads(Path("assets/neighborhood-directory-index.json").read_text(encoding="utf-8"))
+          data_path = Path("assets/neighborhood-directory/postal-neighborhoods.geojson.gz")
+          with gzip.open(data_path, "rt", encoding="utf-8") as stream:
+              collection = json.load(stream)
+          features = collection.get("features", [])
+          if len(features) < 10000 or len(features) != index.get("features"):
+              raise SystemExit(f"Répertoire incomplet : {len(features)} enregistrements.")
+          counts = {"mapped_boundary": 0, "mapped_point": 0, "unlocated": 0}
+          for feature in features:
+              props = feature.get("properties") or {}
+              status = props.get("geometryStatus")
+              if status not in counts:
+                  raise SystemExit(f"Statut de géométrie inconnu : {status}")
+              counts[status] += 1
+              geometry = feature.get("geometry")
+              if status == "mapped_boundary" and (not geometry or geometry.get("type") not in {"Polygon", "MultiPolygon"}):
+                  raise SystemExit("Une frontière cartographiée n'est pas polygonale.")
+              if status == "mapped_point" and (not geometry or geometry.get("type") != "Point"):
+                  raise SystemExit("Une localisation ponctuelle doit rester un point.")
+              if status == "unlocated" and geometry is not None:
+                  raise SystemExit("Une entrée non localisée ne doit pas recevoir de géométrie inventée.")
+          expected = {
+              "mappedBoundaryFeatures": counts["mapped_boundary"],
+              "mappedPointFeatures": counts["mapped_point"],
+              "unlocatedFeatures": counts["unlocated"],
+          }
+          if any(int(index.get(key, -1)) != value for key, value in expected.items()):
+              raise SystemExit("Les compteurs du répertoire ne correspondent pas aux données.")
+          print(f"Répertoire validé : {len(features)} quartiers source, {counts['mapped_boundary']} contours, {counts['mapped_point']} points, {counts['unlocated']} non localisés.")
+          PY
+
       - name: Propose the validated data for review
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          git add assets/neighborhood-boundaries/ assets/neighborhood-boundaries-index.json assets/data-catalog.json assets/map-app.js assets/map-boot.js carte-interactive-maroc.html sw.js reports/
+          git add assets/neighborhood-boundaries/ assets/neighborhood-boundaries-index.json assets/neighborhood-directory/ assets/neighborhood-directory-index.json assets/data-catalog.json assets/map-app.js assets/map-boot.js carte-interactive-maroc.html sw.js reports/
           if git diff --cached --quiet; then
             echo "Aucune différence : aucune pull request nécessaire."
             exit 0
