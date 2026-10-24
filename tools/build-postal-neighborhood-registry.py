@@ -396,6 +396,8 @@ def write_outputs(features, totals, city_stats, duplicates, output: Path, index_
     if postal_features == 0 and osm_features == 0:
         # Backward-compatible default for synthetic unit-test fixtures.
         postal_features = len(features)
+    if postal_features < 10000:
+        raise ValueError(f"Only {postal_features} Poste Maroc rows; 10000 required regardless of OSM supplements")
     index = {
         "version": "morocco-neighborhood-directory-" + datetime.now(timezone.utc).strftime("%Y%m%d"),
         "generatedAt": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
