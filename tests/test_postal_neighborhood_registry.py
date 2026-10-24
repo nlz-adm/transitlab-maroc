@@ -72,6 +72,8 @@ class PostalNeighborhoodRegistryTests(unittest.TestCase):
              "sourceId": "node/1", "geometry": Point(-6.845, 34.005)},
             {"name": "Hay Al Amal", "nameKey": "amal", "city": "", "cityKey": "",
              "sourceId": "node/3", "geometry": Point(-7.6, 31.6)},
+            {"name": "Hay Al Amal", "nameKey": "amal", "city": "Safi", "cityKey": "safi",
+             "sourceId": "node/6", "geometry": Point(-9.2, 32.3)},
             {"name": "Al Waha", "nameKey": "waha", "city": "", "cityKey": "",
              "sourceId": "node/4", "geometry": Point(-9.6, 30.4)},
             {"name": "Al Waha", "nameKey": "waha", "city": "", "cityKey": "",
@@ -111,11 +113,12 @@ class PostalNeighborhoodRegistryTests(unittest.TestCase):
             with gzip.open(root / "postal.gz", "rt", encoding="utf-8") as stream:
                 parsed = json.load(stream)
             parsed_index = json.loads((root / "index.json").read_text(encoding="utf-8"))
+            report_text = (root / "report.md").read_text(encoding="utf-8")
 
         self.assertEqual(len(parsed["features"]), 10000)
         self.assertEqual(parsed_index["features"], 10000)
         self.assertEqual(index["unlocatedFeatures"], 10000)
-        self.assertIn("pas des frontières", (root / "report.md").read_text(encoding="utf-8"))
+        self.assertIn("pas des frontières", report_text)
 
 
 if __name__ == "__main__":
