@@ -48,7 +48,7 @@
       "estimatedFeatures": 0,
       "communesWithFeatures": 562,
       "regions": 12,
-      "bytesCompressed": 1771854,
+      "bytesCompressed": 1774861,
       "loading": "Quartiers cartographiés et îlots urbains estimés à partir du réseau routier et des empreintes de bâtiments OSM, visibles au zoom 11+.",
       "geometrySources": [
         "Contours de quartiers réellement cartographiés : OpenStreetMap et polygones de quartiers Overture, conservés comme sources distinctes.",
@@ -138,17 +138,19 @@
     },
     "postalNeighborhoodDirectory": {
       "url": "assets/neighborhood-directory-index.json",
-      "features": 10026,
-      "mappedBoundaryFeatures": 14,
-      "mappedPointFeatures": 633,
-      "unlocatedFeatures": 9379,
-      "bytesCompressed": 347980,
+      "features": 12006,
+      "mappedBoundaryFeatures": 106,
+      "mappedPointFeatures": 2195,
+      "unlocatedFeatures": 9705,
+      "bytesCompressed": 478796,
       "source": "Barid Al Maghrib 2018 + OpenStreetMap",
-      "sourceDate": "2018-09",
+      "sourceDate": "Poste Maroc 2018-09 ; OSM au moment du rafraîchissement",
       "license": "ODbL 1.0",
-      "loading": "Répertoire des noms de quartiers par ville et code postal, avec géométries OSM uniquement lorsque le nom est localisé de façon fiable.",
-      "method": "10 026 entrées postales conservées, plus entités nommées OSM supplémentaires non fusionnées lorsque leurs géométries sont réelles et leur nom distinct.",
-      "limitation": "Poste Maroc ne fournit pas de contours ; les points ne sont pas des frontières. Les entrées sans géométrie fiable restent non localisées, aucune limite n’est inventée."
+      "loading": "Répertoire consultable des quartiers postaux et des entités OSM nommées qui ne figurent pas au catalogue postal.",
+      "method": "Correspondance stricte des lignes postales et de leurs géométries, puis ajout séparé des noms et géométries OSM supplémentaires. Les frontières restent des polygones cartographiés ; les points ne sont pas des contours.",
+      "limitation": "Poste Maroc ne fournit pas de contours. Les entrées OSM supplémentaires sont des entités cartographiées, pas des limites administratives officielles. Les entrées non localisées restent sans géométrie ; aucune limite n'est inventée.",
+      "postalFeatures": 10026,
+      "osmSupplementFeatures": 1980
     }
   },
   "scripts": {
