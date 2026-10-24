@@ -11,6 +11,7 @@ on:
       - "tools/assign-mapped-neighborhood-polygons.py"
       - "tools/convert-multi-source-to-site-format.py"
       - "tools/build-urban-block-sectors.py"
+      - "tools/build-estimated-neighborhood-zones.py"
       - "tools/build-postal-neighborhood-registry.py"
       - ".github/workflows/update-neighborhoods.yml"
 
@@ -281,7 +282,20 @@ jobs:
             --output assets/data/urban-block-sectors.geojson \
             --report reports/urban-block-coverage.md \
             --target-min 10000 \
-            --target-max 10000
+            --target-max 10000 \
+            --all-output assets/data/urban-block-candidates.geojson
+
+      - name: Build 10000 estimated neighbourhood-scale zones
+        timeout-minutes: 25
+        run: |
+          python tools/build-estimated-neighborhood-zones.py \
+            --blocks assets/data/urban-block-candidates.geojson \
+            --mapped-boundaries assets/data/neighborhoods-estimated.geojson \
+            --osm-geojsonseq /tmp/morocco-neighborhoods.geojsonseq \
+            --output assets/data/estimated-neighborhood-zones.geojson \
+            --report reports/estimated-neighborhood-zones.md \
+            --target 10000 \
+            --max-area-km2 1.2
 
       - name: Fetch Poste Maroc neighborhood catalogue and match mapped OSM geometry
         timeout-minutes: 15
@@ -349,7 +363,9 @@ jobs:
             --output-dir assets/neighborhood-boundaries \
             --index assets/neighborhood-boundaries-index.json \
             --mapped-only \
-            --urban-blocks assets/data/urban-block-sectors.geojson
+            --urban-blocks assets/data/urban-block-sectors.geojson \\
+            --estimated-neighborhoods assets/data/estimated-neighborhood-zones.geojson \\
+            --expected-estimated-neighborhoods 10000
 
       - name: Synchronize data catalog, index version and cache version
         run: |
