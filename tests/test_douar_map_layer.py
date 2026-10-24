@@ -57,7 +57,7 @@ class DouarMapLayerTests(unittest.TestCase):
             self.assertEqual(sum(row["count"] for row in index["regions"]), 12)
             self.assertEqual(sum(row["pointCount"] for row in index["regions"]), 1)
             self.assertEqual(index["pointSources"]["geonames"]["count"], 1)
-            self.assertIn("not the limit", index["limitation"])
+            self.assertIn("pas la limite de son territoire", index["limitation"])
 
             with gzip.open(output_dir / "01.geojson.gz", "rt", encoding="utf-8") as stream:
                 first = json.load(stream)["features"][0]
