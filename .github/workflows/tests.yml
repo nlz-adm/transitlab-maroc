@@ -66,6 +66,9 @@ jobs:
         run: |
           node --check sw.js
           node --check assets/population-choropleth.mjs
+          node --check assets/douars-layer.mjs
           node --input-type=module --check < assets/map-app.js
       - name: Run population choropleth tests
         run: node --test tests/test_population_choropleth.mjs
+      - name: Run rural douar layer tests
+        run: node --test tests/test_douars_layer_ui.mjs
