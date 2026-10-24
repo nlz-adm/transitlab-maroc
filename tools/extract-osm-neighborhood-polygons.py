@@ -139,45 +139,72 @@ def is_same_geometry(a: Any, b: Any, names_match: bool) -> bool:
 
 
 def merge_osm_polygons(existing: list[dict], osm_features: Iterable[dict]):
-    output, parsed, stats = list(existing), [], Counter()
+    output, existing_parsed, candidates, stats = list(existing), [], [], Counter()
+    seen_source_ids = set()
     for feature in existing:
         props = feature.get("properties") or {}
         try:
             geom = polygonal(shape(feature.get("geometry")))
         except Exception:
             geom = None
-        if geom is not None:
-            parsed.append((geom, fold_name(props.get("name_fr") or props.get("name") or props.get("name_ar")), str(props.get("sourceId") or "")))
+        if geom is None:
+            continue
+        source_id = str(props.get("sourceId") or "")
+        existing_parsed.append((geom, fold_name(props.get("name_fr") or props.get("name") or props.get("name_ar")), source_id))
+        if source_id:
+            seen_source_ids.add(source_id)
 
+    # Parse and validate first, then build one static spatial index. This avoids
+    # quadratic geometry comparisons when OSM coverage grows to thousands of areas.
     for feature in osm_features:
         converted = osm_feature_to_neighbourhood(feature, stats)
         if converted is None:
             continue
         props = converted["properties"]
         geom = shape(converted["geometry"])
-        source_id, name = str(props.get("sourceId") or ""), fold_name(props.get("name_fr") or props.get("name"))
-        duplicate = False
-        for old_geom, old_name, old_id in parsed:
-            if (source_id and source_id == old_id) or is_same_geometry(geom, old_geom, bool(name and name == old_name)):
-                duplicate = True
-                break
-        if not duplicate:
-            for old in output[len(existing):]:
-                try:
-                    old_geom = shape(old["geometry"])
-                except Exception:
-                    continue
-                old_props = old.get("properties") or {}
-                old_name = fold_name(old_props.get("name_fr") or old_props.get("name"))
-                if is_same_geometry(geom, old_geom, bool(name and name == old_name)):
-                    duplicate = True
-                    break
-        if duplicate:
+        candidates.append((converted, geom, fold_name(props.get("name_fr") or props.get("name")), str(props.get("sourceId") or "")))
+
+    all_geometries = [item[0] for item in existing_parsed] + [item[1] for item in candidates]
+    base_count = len(existing_parsed)
+    tree = STRtree(all_geometries) if all_geometries else None
+    for pos, (converted, geom, name, source_id) in enumerate(candidates):
+        if source_id and source_id in seen_source_ids:
             stats["deduplicated_osm_polygons"] += 1
             continue
+        duplicate = False
+        candidate_index = base_count + pos
+        if tree is not None:
+            try:
+                neighbours = tree.query(geom, predicate="intersects")
+            except Exception:
+                neighbours = tree.query(geom)
+        else:
+            neighbours = []
+        for raw_index in neighbours:
+            idx = int(raw_index)
+            # Only compare the existing layer and candidates earlier in source order.
+            if idx >= candidate_index:
+                continue
+            if idx < base_count:
+                old_geom, old_name, old_id = existing_parsed[idx]
+            else:
+                old_candidate = candidates[idx - base_count]
+                old_geom, old_name, old_id = old_candidate[1], old_candidate[2], old_candidate[3]
+            if source_id and source_id == old_id:
+                duplicate = True
+                break
+            if is_same_geometry(geom, old_geom, bool(name and name == old_name)):
+                duplicate = True
+                break
+        if duplicate:
+            stats["deduplicated_osm_polygons"] += 1
+            if source_id:
+                seen_source_ids.add(source_id)
+            continue
         output.append(converted)
-        parsed.append((geom, name, source_id))
         stats["new_osm_polygons"] += 1
+        if source_id:
+            seen_source_ids.add(source_id)
     return {"type": "FeatureCollection", "features": output}, stats
 
 
