@@ -36,7 +36,8 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
   if (request.method !== 'GET' || url.origin !== self.location.origin) return;
 
-  const isData = /\/assets\/(network-data|network-optional|communes-fast)\.json$/.test(url.pathname);
+  const isData = /\/assets\/(network-data|network-optional|communes-fast|douars-index)\.json$/.test(url.pathname)
+    || /\/assets\/douars\/\d{2}\.geojson\.gz$/.test(url.pathname);
   if (isData) {
     event.respondWith(
       fetch(request).then((response) => {
@@ -55,7 +56,7 @@ self.addEventListener('fetch', (event) => {
   // fallback for offline use.
   const isShell = request.mode === 'navigate'
     || /\/(?:index\.html|carte-interactive-maroc\.html)$/.test(url.pathname)
-    || /\/assets\/(?:map-boot\.js|map-app\.js|population-choropleth\.mjs|line-index-worker\.js|leaflet\.js|leaflet\.css)$/.test(url.pathname);
+    || /\/assets\/(?:map-boot\.js|map-app\.js|population-choropleth\.mjs|douars-layer\.mjs|line-index-worker\.js|leaflet\.js|leaflet\.css)$/.test(url.pathname);
 
   if (isShell) {
     event.respondWith(
