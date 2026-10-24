@@ -7,6 +7,7 @@ on:
     paths:
       - "tools/prepare-neighborhood-boundaries-multi-source.py"
       - "tools/fetch-overture-neighborhood-areas.py"
+      - "tools/extract-osm-neighborhood-polygons.py"
       - "tools/assign-mapped-neighborhood-polygons.py"
       - "tools/convert-multi-source-to-site-format.py"
       - "tools/build-urban-block-sectors.py"
@@ -224,6 +225,51 @@ jobs:
           ls -lh /tmp/morocco-roads.geojsonseq /tmp/morocco-buildings.geojsonseq /tmp/morocco-neighborhoods.geojsonseq
           rm -f /tmp/morocco-latest.osm.pbf /tmp/morocco-latest.osm.pbf.md5 \
             /tmp/morocco-roads.osm.pbf /tmp/morocco-buildings.osm.pbf /tmp/morocco-neighborhoods.osm.pbf
+
+      - name: Enrich mapped neighbourhoods with real OSM area boundaries
+        run: |
+          python tools/extract-osm-neighborhood-polygons.py \
+            --existing assets/data/neighborhoods-estimated.geojson \
+            --osm-geojsonseq /tmp/morocco-neighborhoods.geojsonseq \
+            --output assets/data/neighborhoods-osm-candidates.geojson \
+            --report reports/osm-neighborhood-polygons.md
+
+          python tools/assign-mapped-neighborhood-polygons.py \
+            --communes assets/data/division_area.geojson \
+            --mapped-seeds assets/data/neighborhoods-osm-candidates.geojson \
+            --output assets/data/neighborhoods-estimated.geojson \
+            --report reports/mapped-neighborhood-coverage.md \
+            --min-polygons 30
+
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          data = json.loads(Path("assets/data/neighborhoods-estimated.geojson").read_text(encoding="utf-8"))
+          features = data.get("features", [])
+          mapped = [
+              f for f in features
+              if (f.get("properties") or {}).get("boundaryKind") == "mapped"
+              and (f.get("properties") or {}).get("estimated") is False
+          ]
+          communes = {
+              str((f.get("properties") or {}).get("commune_id"))
+              for f in mapped if (f.get("properties") or {}).get("commune_id")
+          }
+          regions = {
+              str((f.get("properties") or {}).get("region_code"))
+              for f in mapped if (f.get("properties") or {}).get("region_code")
+          }
+          if len(mapped) < 30 or len(mapped) != len(features):
+              raise SystemExit(f"Invalid mapped-only layer after OSM enrichment: {len(mapped)} mapped of {len(features)}.")
+          if any((f.get("geometry") or {}).get("type") not in {"Polygon", "MultiPolygon"} for f in mapped):
+              raise SystemExit("OSM enrichment emitted a non-polygon feature.")
+          if any(not (f.get("properties") or {}).get("name") for f in mapped):
+              raise SystemExit("OSM enrichment emitted an unnamed feature.")
+          if len(communes) < 20 or len(regions) < 4:
+              raise SystemExit(f"Mapped coverage unexpectedly low: {len(communes)} communes, {len(regions)} regions.")
+          print(f"Mapped neighbourhood contours after OSM enrichment: {len(mapped)}; {len(communes)} communes; {len(regions)} regions.")
+          PY
 
       - name: Build at least 10000 road-bounded urban sectors
         timeout-minutes: 45
