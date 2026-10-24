@@ -347,7 +347,7 @@ jobs:
         timeout-minutes: 10
         run: |
           set -euo pipefail
-          # Pin the public upstream data so the import is reproducible.
+          # Pin the public upstream data to the reviewed 2026-10-24 source snapshot so the import is reproducible.
           SOURCE_COMMIT="7204f75e503c59c7f34c2b7ced7fe47ccff5558c"
           SOURCE_BASE="https://raw.githubusercontent.com/zkousama/morocco-communes/$SOURCE_COMMIT"
           mkdir -p /tmp/transitlab-douars
