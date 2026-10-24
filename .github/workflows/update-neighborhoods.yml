@@ -363,8 +363,8 @@ jobs:
             --output-dir assets/neighborhood-boundaries \
             --index assets/neighborhood-boundaries-index.json \
             --mapped-only \
-            --urban-blocks assets/data/urban-block-sectors.geojson \\
-            --estimated-neighborhoods assets/data/estimated-neighborhood-zones.geojson \\
+            --urban-blocks assets/data/urban-block-sectors.geojson \
+            --estimated-neighborhoods assets/data/estimated-neighborhood-zones.geojson \
             --expected-estimated-neighborhoods 10000
 
       - name: Synchronize data catalog, index version and cache version
