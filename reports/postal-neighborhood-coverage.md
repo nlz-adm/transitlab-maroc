@@ -1,6 +1,6 @@
 # Répertoire des quartiers de Poste Maroc
 
-- Généré le : 2026-10-24T09:50:35+00:00
+- Généré le : 2026-10-24T10:14:49+00:00
 - Source : [Barid Al Maghrib — Codes postaux des quartiers](https://data.gov.ma/data/dataset/e0093dbf-38f0-440a-91da-ad3f0243f378/resource/7f257007-d512-4a2e-9f7f-ba29ee4ac8b1/download/codes-postaux-quartiers-2018.xlsx)
 - Date du jeu source : septembre 2018
 - Licence déclarée : ODbL 1.0

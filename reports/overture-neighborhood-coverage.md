@@ -1,6 +1,6 @@
 # Overture neighbourhood boundary import
 
-- Retrieved at UTC: 2026-10-24T09:43:06+00:00
+- Retrieved at UTC: 2026-10-24T10:07:00+00:00
 - Overture source: https://docs.overturemaps.org/guides/divisions/
 - Licence: https://opendatacommons.org/licenses/odbl/1-0/
 - Spatial filter: Moroccan commune-boundary union, bbox (-17.134627000000002, 20.7399, -0.968429, 35.952454)
@@ -22,9 +22,9 @@
 
 - Attempt 1: exit=0; stdout=; stderr=
 Downloading: 0 rows [00:00, ? rows/s]
-Downloading: 597 rows [00:02, 253.19 rows/s]
-Downloading: 1967 rows [00:02, 997.61 rows/s]
-Downloading: 2983 rows [00:02, 1593.34 rows/s]
-Downloading: 3259 rows [00:02, 1144.86 rows/s]
-State saved to /tmp/transitlab-overture-iezy4o1o/division-area.geojson.state
+Downloading: 597 rows [00:01, 442.73 rows/s]
+Downloading: 1967 rows [00:01, 1650.21 rows/s]
+Downloading: 2983 rows [00:01, 2450.33 rows/s]
+Downloading: 3259 rows [00:14, 227.37 rows/s] 
+State saved to /tmp/transitlab-overture-snbe9b_9/division-area.geojson.state
 

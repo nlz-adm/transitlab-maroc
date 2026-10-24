@@ -48,7 +48,7 @@
       "estimatedFeatures": 0,
       "communesWithFeatures": 562,
       "regions": 12,
-      "bytesCompressed": 1771854,
+      "bytesCompressed": 1774861,
       "loading": "Quartiers cartographiés et îlots urbains estimés à partir du réseau routier et des empreintes de bâtiments OSM, visibles au zoom 11+.",
       "geometrySources": [
         "Contours de quartiers réellement cartographiés : OpenStreetMap et polygones de quartiers Overture, conservés comme sources distinctes.",
