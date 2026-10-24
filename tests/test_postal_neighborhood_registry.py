@@ -133,6 +133,8 @@ class PostalNeighborhoodRegistryTests(unittest.TestCase):
              "sourceId": "node/4", "placeType": "neighbourhood", "geometry": Point(-8.0, 31.6)},
             {"name": "Quartier Without Geometry", "nameKey": "without geometry", "city": "", "cityKey": "",
              "sourceId": "node/5", "placeType": "neighbourhood", "geometry": Point(-6.84, 34.02)},
+            {"name": "Quartier Without Geometry", "nameKey": "without geometry", "city": "", "cityKey": "",
+             "sourceId": "node/6", "placeType": "neighbourhood", "geometry": Point(-6.83, 34.03)},
         ]
 
         features, totals, city_stats, duplicates = MODULE.build_registry(
@@ -151,7 +153,7 @@ class PostalNeighborhoodRegistryTests(unittest.TestCase):
         self.assertEqual(by_name["Hay Al Wifaq"]["properties"]["name_ar"], "حي الوفاق")
         self.assertEqual(by_name["Hay Al Wifaq"]["properties"]["geometryStatus"], "mapped_boundary")
         self.assertEqual(by_name["Sidi New"]["geometry"]["type"], "Point")
-        self.assertNotIn("postalCode", by_name["Sidi New"], "Postal metadata must not be fabricated")
+        self.assertEqual(by_name["Sidi New"]["properties"]["postalCode"], "", "Postal metadata must not be fabricated")
         self.assertEqual(totals["mapped_boundary"], 2)
         self.assertEqual(totals["mapped_point"], 1)
         self.assertEqual(totals["unlocated"], 1)
