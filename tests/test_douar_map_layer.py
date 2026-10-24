@@ -48,6 +48,7 @@ class DouarMapLayerTests(unittest.TestCase):
                 source_commit="123456789abcdef",
                 min_features=12,
                 min_points=1,
+                min_communes=1,
             )
 
             self.assertEqual(index["features"], 12)
@@ -76,6 +77,35 @@ class DouarMapLayerTests(unittest.TestCase):
             self.assertEqual(second["properties"]["population"], 52)
             self.assertEqual(second["properties"]["locationSource"], "")
             self.assertIn("geometry=null", report_path.read_text(encoding="utf-8"))
+
+    def test_national_commune_coverage_guard_stays_strict_by_default(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source_dir = root / "source"
+            source_dir.mkdir()
+            for number in range(1, 13):
+                region = f"{number:02d}"
+                row = {
+                    "code": f"{number:02d}00101010001",
+                    "communeCode": f"{region}.001.01.01",
+                    "fraction": f"{region}0010101",
+                    "name": {"ar": f"دوار {region}"},
+                    "type": "grouped",
+                    "households": 2,
+                    "population": 6,
+                    "topics": None,
+                }
+                (source_dir / f"{region}.json").write_text(json.dumps([row]), encoding="utf-8")
+            places = root / "places.json"
+            places.write_text(json.dumps({"places": []}), encoding="utf-8")
+
+            with self.assertRaisesRegex(ValueError, "national production default: 1000"):
+                MODULE.build_dataset(
+                    source_dir, places, root / "out", root / "index.json", root / "report.md",
+                    source_commit="123456789abcdef",
+                    min_features=12,
+                    min_points=0,
+                )
 
     def test_rejects_duplicate_or_invalid_place_matches(self):
         with tempfile.TemporaryDirectory() as tmp:
