@@ -192,18 +192,19 @@ def assign_groups(geometries: list, props: list[dict], target: int, area_cap: fl
                 continue
             score = shared / math.sqrt(max(areas[i] * areas[j], 1e-12))
             if score > 0:
-                heapq.heappush(edges, (-score, -shared, i, j))
+                heapq.heappush(edges, (-score, -score, -shared, i, j))
 
     merge_operations = 0
     initial_edges = len(edges)
     while dsu.components > target and edges:
-        neg_score, neg_shared, i, j = heapq.heappop(edges)
+        neg_priority, neg_base_score, neg_shared, i, j = heapq.heappop(edges)
         ri, rj = dsu.find(i), dsu.find(j)
         if ri == rj:
             continue
-        current_score = (-neg_shared) / math.sqrt(max(dsu.size[ri] * dsu.size[rj], 1))
-        if not math.isclose(-neg_score, current_score, rel_tol=1e-8, abs_tol=1e-12):
-            heapq.heappush(edges, (-current_score, neg_shared, i, j))
+        base_score, shared = -neg_base_score, -neg_shared
+        current_score = base_score / math.sqrt(max(dsu.size[ri] * dsu.size[rj], 1))
+        if not math.isclose(-neg_priority, current_score, rel_tol=1e-8, abs_tol=1e-12):
+            heapq.heappush(edges, (-current_score, neg_base_score, neg_shared, i, j))
             continue
         if dsu.union(ri, rj, area_cap):
             merge_operations += 1
