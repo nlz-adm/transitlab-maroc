@@ -332,8 +332,8 @@ def build_registry(
             def rank(item):
                 geom = item["geometry"]
                 polygon = geom.geom_type in {"Polygon", "MultiPolygon"}
-                area = float(geom.area) if polygon else float("inf")
-                return (int(polygon), -area)
+                area = float(geom.area) if polygon else 0.0
+                return (int(polygon), area)
             chosen = max(viable, key=rank)
 
         geometry = None
@@ -431,7 +431,7 @@ def build_registry(
                 "sourceRow": "",
                 "sourceId": stable_id,
                 "geometryStatus": status,
-                "geometrySource": "osm",
+                "geometrySource": source,
                 "geometrySourceId": stable_id,
                 "boundaryKind": "mapped" if status == "mapped_boundary" else "neighborhood_point",
                 "estimated": False if status == "mapped_boundary" else None,
