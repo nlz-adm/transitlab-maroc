@@ -336,6 +336,7 @@ def main() -> int:
     parser.add_argument("--source-commit", required=True, help="Pinned upstream repository commit SHA")
     parser.add_argument("--min-features", type=int, default=30000)
     parser.add_argument("--min-points", type=int, default=10000)
+    parser.add_argument("--min-communes", type=int, default=1000)
     args = parser.parse_args()
 
     index = build_dataset(
@@ -343,6 +344,7 @@ def main() -> int:
         source_commit=args.source_commit,
         min_features=args.min_features,
         min_points=args.min_points,
+        min_communes=args.min_communes,
     )
     print(
         f"Douars HCP: {index['features']} entrées, {index['locatedPoints']} points, "
