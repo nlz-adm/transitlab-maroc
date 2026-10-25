@@ -390,8 +390,12 @@ class PublishedDataIntegrityTests(unittest.TestCase):
         self.assertIn("new DecompressionStream('gzip')", app)
         self.assertIn("geometryStatus", app)
         self.assertIn("aucune position ni limite n’est inventée", app)
+        self.assertIn("Overture supplémentaires", app)
+        self.assertIn("props.source==='overture'?'Overture Maps'", app)
+        self.assertIn("--mapped-boundaries assets/data/neighborhoods-estimated.geojson", workflow)
+        self.assertIn("overtureSupplementFeatures", workflow)
         self.assertIn("NEIGHBORHOOD_DIRECTORY_VERSION='[^']+'", workflow)
-        self.assertIn('cache_version = "maroc-v32-"', workflow)
+        self.assertIn('cache_version = "maroc-v34-"', workflow)
 
     def test_douars_layer_is_wired_as_a_separate_point_overlay(self):
         import re
