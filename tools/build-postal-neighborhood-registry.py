@@ -525,6 +525,7 @@ def main() -> int:
     parser.add_argument("--mapped-boundaries", type=Path, default=None, help="Optional mapped OSM/Overture polygon GeoJSON")
     parser.add_argument("--communes", type=Path, default=None, help="Optional commune polygons for spatially assigning OSM names")
     parser.add_argument("--include-unmatched-osm", action="store_true", help="Append named OSM features not matched to postal rows")
+    parser.add_argument("--include-unmatched-mapped", action="store_true", help="Append unmatched polygons from mapped OSM/Overture boundary data")
     parser.add_argument("--output", type=Path, default=Path("assets/neighborhood-directory/postal-neighborhoods.geojson.gz"))
     parser.add_argument("--index", type=Path, default=Path("assets/neighborhood-directory-index.json"))
     parser.add_argument("--report", type=Path, default=Path("reports/postal-neighborhood-coverage.md"))
@@ -537,7 +538,7 @@ def main() -> int:
     features, totals, city_stats, duplicates = build_registry(
         records, candidates,
         include_unmatched_osm=args.include_unmatched_osm,
-        include_unmatched_mapped=args.include_unmatched_osm or args.mapped_boundaries is not None,
+        include_unmatched_mapped=args.include_unmatched_osm or args.include_unmatched_mapped,
     )
     index = write_outputs(features, totals, city_stats, duplicates, args.output, args.index, args.report)
     print(f"Quartiers Poste Maroc : {index['features']} entrées; "
