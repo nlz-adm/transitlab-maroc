@@ -1,17 +1,18 @@
 {
-  "version": "morocco-neighborhood-directory-20261024",
-  "generatedAt": "2026-10-24T10:47:08+00:00",
-  "source": "Barid Al Maghrib · Codes postaux des quartiers + OpenStreetMap",
-  "sourceDate": "Poste Maroc 2018-09 ; OSM au moment du rafraîchissement",
+  "version": "morocco-neighborhood-directory-20261025",
+  "generatedAt": "2026-10-25T22:12:37+00:00",
+  "source": "Barid Al Maghrib · Codes postaux des quartiers + OpenStreetMap + Overture Maps",
+  "sourceDate": "Poste Maroc 2018-09 ; OSM et Overture au moment du rafraîchissement",
   "sourceUrl": "https://data.gov.ma/data/dataset/e0093dbf-38f0-440a-91da-ad3f0243f378/resource/7f257007-d512-4a2e-9f7f-ba29ee4ac8b1/download/codes-postaux-quartiers-2018.xlsx",
   "license": "ODbL-1.0",
-  "features": 12006,
+  "features": 12256,
   "postalFeatures": 10026,
-  "osmSupplementFeatures": 1980,
-  "mappedBoundaryFeatures": 106,
-  "mappedPointFeatures": 2195,
-  "unlocatedFeatures": 9705,
+  "osmSupplementFeatures": 1966,
+  "overtureSupplementFeatures": 264,
+  "mappedBoundaryFeatures": 364,
+  "mappedPointFeatures": 2189,
+  "unlocatedFeatures": 9703,
   "duplicateCityNeighborhoodNames": 458,
   "url": "assets/neighborhood-directory/postal-neighborhoods.geojson.gz",
-  "bytesCompressed": 478796
+  "bytesCompressed": 696486
 }

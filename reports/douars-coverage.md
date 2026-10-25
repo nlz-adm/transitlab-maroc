@@ -1,6 +1,6 @@
 # Douars ruraux · RGPH 2024
 
-- Généré le : 2026-10-24T10:47:12+00:00
+- Généré le : 2026-10-25T22:12:43+00:00
 - Source HCP : [https://www.hcp.ma/Population-et-menages-par-douars-selon-les-resultats-du-recensement-general-de-la-population-et-de-l-habitat-de-2024_a4208.html](https://www.hcp.ma/Population-et-menages-par-douars-selon-les-resultats-du-recensement-general-de-la-population-et-de-l-habitat-de-2024_a4208.html)
 - Jeu en amont : [https://github.com/zkousama/morocco-communes](https://github.com/zkousama/morocco-communes) à 7204f75e503c59c7f34c2b7ced7fe47ccff5558c
 - Licence des données HCP : CC BY 4.0 ; crédit HCP et indiquer les transformations.
